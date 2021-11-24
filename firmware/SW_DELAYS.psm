@@ -1,0 +1,15 @@
+DELAY_100MS: LOAD s0, 03
+			 LOAD s1, 0D
+			 LOAD s2, 40
+	 
+delay_loop:  SUB s2,   01
+			 SUBCY s1, 00
+			 SUBCY s0, 00
+			 JUMP NZ, delay_loop
+			 RETURN
+			 
+DELAY_1S:	LOAD s0, 09
+decr:		CALL DELAY_100MS
+			SUB s0, 01
+			JUMP NZ, decr
+			RETURN

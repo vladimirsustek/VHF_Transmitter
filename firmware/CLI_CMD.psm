@@ -1,0 +1,165 @@
+CONSTANT CMD_LNG, 06
+CONSTANT ARG_LNG, 08
+CONSTANT CMD_OK, 55
+CONSTANT CMD_ER, AA
+;------------------------------------------
+
+STRING SDA1_STV$, "D1_SV_"
+CMD_DA1STV: LOAD&RETURN s6, SDA1_STV$
+	  
+STRING SDA0_STI$, "D0_SI_"
+CMD_DA0STI: LOAD&RETURN s6, SDA0_STI$
+
+STRING SAUD_VLM$, "AU_VM_"
+CMD_AUDVLM: LOAD&RETURN s6, SAUD_VLM$
+
+STRING SDA0_AMP$, "D0_AM_"
+CMD_DA0AMP: LOAD&RETURN s6, SDA0_AMP$
+
+
+; D1_SV_54657374
+; D0_SI_54657374
+; AU_VM_54657374
+; D0_AM_54657374
+
+
+;------------------------------------------
+
+STRING SRDA1_STV$, "DA1:V set"
+RSP_DA1STV: CALL UART_TX_CLEAR
+			OUTPUTK SRDA1_STV$, 1
+		    OUTPUTK 0A, 1
+			CALL READ_ARG_15_08
+			OUTPUT BUFF_DATA, 03
+			CALL READ_ARG_07_00
+			OUTPUT BUFF_DATA, 04
+			RETURN		
+STRING SRDA0_SET$, "DA0:I set"
+RSP_DA0STI: CALL UART_TX_CLEAR
+			OUTPUTK SRDA0_SET$, 1
+		    OUTPUTK 0A, 1
+			RETURN			
+STRING SRAUD_VLM$, "AUD:V set"
+RSP_AUDVLM: CALL UART_TX_CLEAR
+			OUTPUTK SRAUD_VLM$, 1
+		    OUTPUTK 0A, 1
+			RETURN
+STRING SRDA0_AMP$, "DA0:A set"
+RSP_DA0AMP: CALL UART_TX_CLEAR
+			OUTPUTK SRDA0_AMP$, 1
+		    OUTPUTK 0A, 1
+			RETURN
+
+STRING SERR$, "CmdArgEr!"
+RSP_ERR:    CALL UART_TX_CLEAR
+			OUTPUTK SERR$, 1
+		    OUTPUTK 0A, 1
+			RETURN	
+			
+;------------------------------------------
+   
+;--------------------------------------------------
+
+ 
+CHECK_RECEIVED:	LOAD s9, BUFF_HEAD
+
+				LOAD s3, CMD_DA1STV'upper
+				LOAD s2, CMD_DA1STV'lower
+				LOAD s1, RSP_DA1STV'upper
+				LOAD s0, RSP_DA1STV'lower	
+				CALL COMPARE_CMD
+				
+				LOAD BUFF_HEAD, s9
+				
+				LOAD s3, CMD_DA0STI'upper
+				LOAD s2, CMD_DA0STI'lower
+				LOAD s1, RSP_DA0STI'upper
+				LOAD s0, RSP_DA0STI'lower
+				CALL COMPARE_CMD
+				
+				LOAD BUFF_HEAD, s9
+				
+				LOAD s3, CMD_AUDVLM'upper
+				LOAD s2, CMD_AUDVLM'lower
+				LOAD s1, RSP_AUDVLM'upper
+				LOAD s0, RSP_AUDVLM'lower
+				CALL COMPARE_CMD
+				
+				LOAD BUFF_HEAD, s9
+				
+				LOAD s3, CMD_DA0AMP'upper
+				LOAD s2, CMD_DA0AMP'lower
+				LOAD s1, RSP_DA0AMP'upper
+				LOAD s0, RSP_DA0AMP'lower
+				CALL COMPARE_CMD
+				
+				CALL INIT_BUFF
+				RETURN				
+			
+;--------------------------------------------------
+
+
+COMPARE_CMD:  LOAD s4, CMD_LNG ; length of string for loop length
+cycle:		  CALL@ (s3, s2) ; call character returning routine
+			  OR s4, 00 ; return Z context to s4 - end of loop ?
+			  JUMP Z, endofstr ; if yes jump to check last character
+			  CALL READ_BUFF
+			  COMPARE s6, BUFF_DATA ; no, so check if passed data meet the tested
+			  RETURN NZ ; if not, immediately leave
+			  SUB s4, 01 ; if yes, not decrement loop lifetime
+			  ADD s2, 01 ; increment routines address to get/test another char
+			  JUMP cycle ; repeat for another character
+			  
+endofstr:	  LOAD s4, BUFF_TAIL
+			  SUB s4, BUFF_HEAD
+			  SUB s4, 01
+			  COMPARE s4, ARG_LNG ; LF as the last ?
+			  JUMP Z, match ; 1 or 0 returned in s0
+			  CALL RSP_ERR
+			  RETURN
+			  
+match:		  CALL@ (s1, s0)
+			  CALL GET_ARG
+			  RETURN
+			  
+;--------------------------------------------------
+
+GET_ARG:	  LOAD s4, ADRARG_31_24
+iter32b:	  CALL READ_BUFF
+			  CALL ASCII2HEX
+			  LOAD s5, BUFF_DATA
+			  SL0 s5
+			  SL0 s5
+			  SL0 s5
+			  SL0 s5  
+			  CALL READ_BUFF
+			  CALL ASCII2HEX
+			  ADD s5, BUFF_DATA
+			  
+			  STORE s5, (s4)	  
+			  ADD s4, 01
+			  
+			  JUMP NC, iter32b
+			  CALL PRINT_ARG		  
+			  RETURN Z
+			  
+ASCII2HEX:    SUB BUFF_DATA, 30
+			  COMPARE BUFF_DATA, 0A
+			  RETURN C
+			  SUB BUFF_DATA, 07
+			  COMPARE BUFF_DATA, 10
+			  RETURN C
+			  SUB BUFF_DATA, 20
+			  RETURN
+
+			  
+PRINT_ARG:    CALL READ_ARG_31_24
+			  OUTPUT BUFF_DATA, 01
+			  CALL READ_ARG_23_16
+			  OUTPUT BUFF_DATA, 01
+			  CALL READ_ARG_15_08
+			  OUTPUT BUFF_DATA, 01
+			  CALL READ_ARG_07_00
+			  OUTPUT BUFF_DATA, 01
+			  OUTPUTK 0A, 1
+			  RETURN

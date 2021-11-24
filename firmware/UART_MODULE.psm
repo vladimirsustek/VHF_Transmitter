@@ -1,0 +1,104 @@
+;----------------- UART WRITE PORTS ----------------
+
+CONSTANT UART_STATUS_PORT, 01
+CONSTANT TX_UART_PORT, 01
+
+;----------------- UART READ PORTS -----------------
+
+CONSTANT RX_UART_PORT, 02
+
+;----------------- UART COMMANDS -------------------
+
+CONSTANT UART_RX_FIFO_RESET, 02
+CONSTANT UART_TX_FIFO_RESET, 01
+CONSTANT UART_RELEASE_RESET, 00
+
+;----------------- UART FLAGS ----------------------
+
+CONSTANT UART_TX_DATA_PRESENT, 80
+CONSTANT UART_TX_HALF_FULL, 40
+CONSTANT UART_TX_FULL, 20
+CONSTANT UART_RX_DATA_PRESENT, 10
+CONSTANT UART_RX_HALF_FULL, 08
+CONSTANT UART_RX_FULL, 04
+
+;----------------- UART STATES ---------------------
+
+CONSTANT UART_NO_DATA_PRESENT, 00
+
+;---------------------------------------------------		
+;---------------- TRANSMIT -------------------------		
+;---------------------------------------------------
+
+UART_TX_CLEAR: 	OUTPUTK UART_TX_FIFO_RESET, 0
+				LOAD UART_STATUS, 0F
+txrstdcr:		SUB UART_STATUS, 01
+				JUMP NZ, txrstdcr
+				OUTPUTK UART_RELEASE_RESET, 0
+				RETURN
+
+;---------------------------------------------------
+				
+UART_TX:		INPUT UART_STATUS, UART_STATUS_PORT
+				TEST UART_STATUS, UART_TX_FULL
+				JUMP NZ, UART_TX
+				OUTPUT UART_DATA, TX_UART_PORT
+				RETURN
+
+;---------------------------------------------------		
+;---------------- RECEIVE --------------------------		
+;---------------------------------------------------
+UART_RX_CLEAR: 	OUTPUTK UART_RX_FIFO_RESET, 0
+				LOAD UART_STATUS, 0F
+rxrstdcr:		SUB UART_STATUS, 01
+				JUMP NZ, rxrstdcr
+				OUTPUTK UART_RELEASE_RESET, 0
+				RETURN
+				
+;---------------------------------------------------
+				
+UART_RX: 	INPUT UART_STATUS, UART_STATUS_PORT
+			TEST UART_STATUS, UART_RX_DATA_PRESENT
+			JUMP NZ, rx_read
+			LOAD&RETURN UART_STATUS, UART_NO_DATA_PRESENT
+			
+rx_read:	INPUT UART_DATA, RX_UART_PORT
+			LOAD&RETURN UART_STATUS, UART_RX_DATA_PRESENT
+		
+;--------------------------------------------------
+;----------IMPLEMENTATION WITH TIMEOUT-------------
+;--------------------------------------------------
+; Implemented for 57600baud, thus 7200B/s, MCUCLK 16MHz
+; Therofore 8MHz "instruction speed" and 139us time to
+; receive one single byte. If full byte takes 140us 
+; (1/7200), let's wait maximaly for 2x140us ~ 300us
+;
+; Timeout is implemented as blocking delay to gradually
+; decrement register s8,s9 preset to valule 399 decadic.
+; The loop from the rx_timeout down to JUMP rx_timeout
+; takes 6 instructions called. So, these instructions are
+; maxilally 2400x called (note that also within them 
+; is checked the UART_STATUS for the UART_RX_DATA_PRESENT).
+; If reception takes place, loop is exited, otherwise
+; is loop exited after 2400 cyles = timeout for byte: 300us.
+;
+; If timeout implementation is needed, completely uncomment
+; it's code and comment the timeoutless upper implementation
+;
+; UART_RX:	LOAD s8, 01
+       	    ; LOAD s9, 8F
+		 
+; rx_timeout: INPUT UART_STATUS, UART_STATUS_PORT
+			; TEST UART_STATUS, UART_RX_DATA_PRESENT
+			; JUMP NZ, rx_read
+			; SUB s9, 01
+			; SUBCY s8, 00
+			; JUMP Z, no_data
+			; JUMP rx_timeout
+			
+; rx_read:	INPUT UART_DATA, RX_UART_PORT
+			; LOAD UART_STATUS, UART_RX_DATA_PRESENT
+			; RETURN
+			
+; no_data:    LOAD UART_STATUS, 00
+			; RETURN

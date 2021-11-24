@@ -1,0 +1,2 @@
+vhdl work ../../clkup.vhd
+vhdl work ../example_design/clkup_exdes.vhd

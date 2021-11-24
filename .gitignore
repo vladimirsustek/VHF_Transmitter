@@ -1,0 +1,11 @@
+/work
+*.fmt
+*.log
+*.txt
+*.cfi
+*.prm
+*.sig
+*.xsl
+*.xwbt
+*.html
+*.xml
