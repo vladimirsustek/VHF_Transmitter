@@ -1,0 +1,129 @@
+CONSTANT cDAC1_15_8Port, 03
+CONSTANT cDAC1_07_0Port, 04
+CONSTANT cLEDPort, 00
+
+			;ON STARTUP
+			CALL DELAY_20UMS
+			LOAD s5, 10
+
+
+voltinc:	LOAD s3, 0F
+			LOAD s4, FF
+			OUTPUT s3, cDAC1_15_8Port
+			OUTPUT s4, cDAC1_07_0Port
+
+			CALL DELAY
+			CALL LEDBLINK
+			
+			LOAD s3, 1F
+			LOAD s4, FF
+			OUTPUT s3, cDAC1_15_8Port
+			OUTPUT s4, cDAC1_07_0Port
+			
+			CALL DELAY
+			CALL LEDBLINK
+
+			
+			LOAD s3, 2F
+			LOAD s4, FF
+			OUTPUT s3, cDAC1_15_8Port
+			OUTPUT s4, cDAC1_07_0Port
+			
+			CALL DELAY
+			CALL LEDBLINK
+
+		
+			LOAD s3, 3F
+			LOAD s4, FF
+			OUTPUT s3, cDAC1_15_8Port
+			OUTPUT s4, cDAC1_07_0Port
+			
+			CALL DELAY
+			CALL LEDBLINK
+
+		
+			LOAD s3, 4F
+			LOAD s4, FF
+			OUTPUT s3, cDAC1_15_8Port
+			OUTPUT s4, cDAC1_07_0Port
+
+			CALL DELAY
+			CALL LEDBLINK
+
+		
+			LOAD s3, 5F
+			LOAD s4, FF
+			OUTPUT s3, cDAC1_15_8Port
+			OUTPUT s4, cDAC1_07_0Port
+
+			CALL DELAY
+			CALL LEDBLINK
+
+		
+			LOAD s3, 6F
+			LOAD s4, FF
+			OUTPUT s3, cDAC1_15_8Port
+			OUTPUT s4, cDAC1_07_0Port
+
+			CALL DELAY
+			CALL LEDBLINK
+
+		
+			LOAD s3, 7F
+			LOAD s4, FF
+			OUTPUT s3, cDAC1_15_8Port
+			OUTPUT s4, cDAC1_07_0Port
+
+			CALL DELAY
+			CALL LEDBLINK
+
+		
+			LOAD s3, 8F
+			LOAD s4, FF
+			OUTPUT s3, cDAC1_15_8Port
+			OUTPUT s4, cDAC1_07_0Port
+
+			CALL DELAY
+			CALL LEDBLINK
+
+	
+			JUMP voltinc
+ 
+ 
+DELAY: CALL DELAY_1S
+	   RETURN
+	   
+	   
+DELAY_20UMS: LOAD s0, 00
+             LOAD s1, 00
+             LOAD s2, 28
+ delay_loop2: SUB s2, 01
+             SUBCY s1, 00
+             SUBCY s0, 00
+             JUMP NZ, delay_loop2
+             RETURN 
+
+DELAY_100MS: LOAD s0, 03
+             LOAD s1, 0D
+             LOAD s2, 40
+ delay_loop: SUB s2, 01
+             SUBCY s1, 00
+             SUBCY s0, 00
+             JUMP NZ, delay_loop
+             RETURN 
+			 
+   DELAY_1S: LOAD s6, 09
+       decr: CALL DELAY_100MS
+             SUB s6, 01
+             JUMP NZ, decr
+             RETURN  		 
+
+LEDBLINK:    OUTPUT s5, cLEDPort
+			 COMPARE s5, 90
+			 JUMP Z, restart
+			 ADD s5, 10
+ledblink_end:RETURN
+			 
+restart: 	 LOAD s5, 10
+			 JUMP ledblink_end
+

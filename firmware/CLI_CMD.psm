@@ -2,6 +2,8 @@ CONSTANT CMD_LNG, 06
 CONSTANT ARG_LNG, 08
 CONSTANT CMD_OK, 55
 CONSTANT CMD_ER, AA
+CONSTANT cDAC1_15_8Port, 03
+CONSTANT cDAC1_07_0Port, 04
 ;------------------------------------------
 
 STRING SDA1_STV$, "D1_SV_"
@@ -30,10 +32,11 @@ RSP_DA1STV: CALL UART_TX_CLEAR
 			OUTPUTK SRDA1_STV$, 1
 		    OUTPUTK 0A, 1
 			CALL READ_ARG_15_08
-			OUTPUT BUFF_DATA, 03
+			OUTPUT BUFF_DATA, cDAC1_15_8Port
 			CALL READ_ARG_07_00
-			OUTPUT BUFF_DATA, 04
-			RETURN		
+			OUTPUT BUFF_DATA, cDAC1_07_0Port
+			RETURN
+			
 STRING SRDA0_SET$, "DA0:I set"
 RSP_DA0STI: CALL UART_TX_CLEAR
 			OUTPUTK SRDA0_SET$, 1
@@ -118,8 +121,8 @@ endofstr:	  LOAD s4, BUFF_TAIL
 			  CALL RSP_ERR
 			  RETURN
 			  
-match:		  CALL@ (s1, s0)
-			  CALL GET_ARG
+match:		  CALL GET_ARG  
+			  CALL@ (s1, s0) 
 			  RETURN
 			  
 ;--------------------------------------------------

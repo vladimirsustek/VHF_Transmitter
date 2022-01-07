@@ -31,20 +31,32 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity top is
 		Port (CLK : in  STD_LOGIC;
+		
 				BTNS : in  STD_LOGIC_VECTOR (1 downto 0);
 				LEDS : out  STD_LOGIC_VECTOR (3 downto 0);
+				
 				UART_TX : out STD_LOGIC;
 				UART_RX : in STD_LOGIC;
 				
-				-- DAC1 + inputs workaround (otherwise DAC1 failure)
-				PORTD : in std_logic_vector(7 downto 6);
-				PORTE : in std_logic_vector(0 downto 0);
-
+				DAC1_NRESET : in std_logic;
+				DAC1_NCLEAR : in std_logic;
+				DAC1_NALERT: in std_logic;
 				DAC1_NLDAC : out std_logic;
 				DAC1_SCLK : out std_logic;
 				DAC1_NCS : out std_logic;
 				DAC1_MOSI : out std_logic;
-				DAC1_MISO : in std_logic);
+				DAC1_MISO : in std_logic;
+
+				ADC0_SCLK : out std_logic;
+				ADC0_SDI : in std_logic;
+				ADC0_NCS : out std_logic;
+				
+				ADC1_SCLK : out std_logic;
+				ADC1_SDI : in std_logic;
+				ADC1_NCS : out std_logic;
+				
+				DAC0_DATA : out std_logic_vector(9 downto 0);
+				DAC0_CLK : out std_logic);
 end top;
 
 architecture Behavioral of top is
@@ -156,7 +168,6 @@ constant cUARTRstPort : std_logic_vector(3 downto 0) := X"0";
 
 constant cDAC1_15_8Port : std_logic_vector(7 downto 0) := X"03";
 constant cDAC1_07_0Port : std_logic_vector(7 downto 0) := X"04";
-constant cDAC1SetPort : std_logic_vector(7 downto 0) := X"05";
 	-----------------------------------------------------------------------------
 	--								SIGNALS
 	-----------------------------------------------------------------------------
@@ -201,7 +212,8 @@ signal sRxUARTdata : std_logic_vector(7 downto 0) := (others => '0');
   -- DAC1
 signal sDAC1BufferedValue : std_logic_vector(15 downto 0) := (others => '0');
 signal sDAC1ReadyValue : std_logic_vector(15 downto 0) := (others => '0');
-signal sDAC1WriteValue : std_logic := '0';
+signal sDAC1WritePortReq : std_logic := '0';
+signal sDAC1WritePortAck : std_logic := '0';
 begin
 
 	-----------------------------------------------------------------------------
@@ -262,21 +274,22 @@ begin
 	-----------------------------------------------------------------------------
 	-- 								 OUT/IN HANDLING
 	-----------------------------------------------------------------------------							  
-	output_ports : process(sCLK16MHz)
+	output_ports : process(sCLK16MHz, sMcuPortId, sMcuOutPort, sMcuKwriteStrobe, sMcuwriteStrobe)
 	begin
 		if rising_edge(sCLK16MHz) then
 		----------------------------------
 		   if sMcuKwriteStrobe = '1' then
-			case sMcuPortId(3 downto 0) is 
-				when cUARTRstPort =>
-					sTxUARTreset <= sMcuOutPort(0);
-					sRxUARTreset <= sMcuOutPort(1);
-				when cTxUARTDataPort(3 downto 0) =>
-					sTxUARTdata <= sMcuOutPort;
-				when others =>
-			end case;
+				case sMcuPortId(3 downto 0) is 
+					when cUARTRstPort =>
+						sTxUARTreset <= sMcuOutPort(0);
+						sRxUARTreset <= sMcuOutPort(1);
+					when cTxUARTDataPort(3 downto 0) =>
+						sTxUARTdata <= sMcuOutPort;					
+					when others =>
+				end case;
+			end if;
 			--------------------------------
-			elsif sMcuWriteStrobe = '1' then
+			if sMcuWriteStrobe = '1' then
 				case sMcuPortId is
 					when cLEDPort => 
 						LEDS <= sMcuOutPort(7 downto 4);
@@ -286,7 +299,8 @@ begin
 						sDAC1BufferedValue(15 downto 8) <= sMcuOutPort(7 downto 0);
 					when cDAC1_07_0Port =>
 						sDAC1BufferedValue(7 downto 0) <= sMcuOutPort(7 downto 0);
-					when others =>						    
+						sDAC1WritePortReq <= '1';
+					when others =>
 				end case;
 			end if;
 			--------------------------------
@@ -297,10 +311,13 @@ begin
 			else
 				sTxUARTWrite <= '0';
 			end if;
+			if sDAC1WritePortAck = '1' then
+				sDAC1WritePortReq <= '0';
+			end if;
 		end if;
 	end process;
 	
-	input_ports : process(sCLK16MHz)
+	input_ports : process(sCLK16MHz, sMcuPortId, BTNS(1 downto 0),  sTxUARTtxDataPresent, sTxUARTHalfFull, sTxUARTFull, sRxUARTrxDataPresent, sRxUARTHalfFull, sRxUARTFull, sRxUARTdata, sMcuReadStrobe)
 	begin
 		if rising_edge(sCLK16MHz) then
 			case sMcuPortId is 
@@ -318,7 +335,7 @@ begin
 				when cRxUARTDataPort =>
 					sMcuInPort <= sRxUARTdata;
 				when others =>
-					sMcuPortId <= (others => 'X');
+					sMcuInPort <= (others => 'X');
 			end  case;
 			
 			if sMcuReadStrobe = '1' and sMcuPortId = cRxUARTDataPort then
@@ -388,6 +405,28 @@ begin
 		sclk_o => DAC1_SCLK,
 		ncs_o => DAC1_NCS,
 		nldac_o => DAC1_NLDAC );
+		
+		buffer16bvalue : process(sCLK16MHz, sDAC1BufferedValue, sDAC1WritePortReq)
+		begin
+			if rising_edge(sCLK16MHz) then
+				if sDAC1WritePortReq = '1' then
+					sDAC1ReadyValue <= sDAC1BufferedValue;
+					sDAC1WritePortAck <= '1';
+				else
+					sDAC1WritePortAck <= '0';
+				end if;
+			end if;
+		end process;
+		
+		
+		ADC0_SCLK <= '0';
+		ADC0_NCS <= '0';
+		
+		ADC1_SCLK <= '0';
+		ADC1_NCS <= '0';
+		
+		DAC0_DATA <= (others => '0');
+		DAC0_CLK <= '0';
 		
 end Behavioral;
 

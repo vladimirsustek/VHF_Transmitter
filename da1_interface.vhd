@@ -68,6 +68,8 @@ type iterface_state is (IDLE, INIT_CMD_SETUP, INIT_VOLTAGE, CMD_VOLTAGE, NLDAC_A
 -- Init: 0-5V range, 0 default value, set no overrange
 constant conSetupControl : std_logic_vector(23 downto 0) := X"040023";
 constant conSetToZero : std_logic_vector(23 downto 0) := X"030000";
+constant con625mV : std_logic_vector(15 downto 0) := X"1FFF"; -- 8191 * 0.076mV = 625mV
+constant con3000mV : std_logic_vector(15 downto 0) := X"9999";
 
 --constant conFullReset : std_logic_vector(23 downto 0) := X"0F0000";
 --constant conSetToMax : std_logic_vector(23 downto 0) := X"03FFFF";
@@ -122,7 +124,7 @@ begin
 					    sigCmd <= conSetToZero;
 						 sigIFstate <= INIT_VOLTAGE;
 					when INIT_VOLTAGE =>
-					   sigCmd <= std_logic_vector(unsigned(conSetToZero) + X"1FFF");
+					   sigCmd <= std_logic_vector(unsigned(conSetToZero) + unsigned(con625mV));
 						sigIFstate <= NLDAC_ACTIVE;
 			      when CMD_VOLTAGE =>
 					    sigCmd <= std_logic_vector(unsigned(conSetToZero) + unsigned(voltage_i));
@@ -131,8 +133,8 @@ begin
 					    sigIFstate <= READY;
 						 sigNLDAC <= '0';
 			      when READY =>
-						  -- safety feature to do not exceed to X"9999", the 3V at 5V AD5761 range
-				        if voltage_i /= sigPrevVoltage and unsigned(voltage_i) < X"9999" then
+						  -- safety feature to do not exceed to con3000mV, the 3V at 5V AD5761 range
+				        if voltage_i /= sigPrevVoltage and unsigned(voltage_i) < unsigned(con3000mV) then
 					         sigPrevVoltage <= voltage_i;
 								sigIFstate <= CMD_VOLTAGE;
 				        end if;
