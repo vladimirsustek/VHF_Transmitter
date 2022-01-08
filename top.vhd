@@ -22,12 +22,12 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+use IEEE.NUMERIC_STD.ALL;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+library UNISIM;
+use UNISIM.VComponents.all;
 
 entity top is
 		Port (CLK : in  STD_LOGIC;
@@ -157,6 +157,31 @@ architecture Behavioral of top is
 		);
 	END COMPONENT;
 	
+	COMPONENT DDS_RF
+	PORT (
+		 clk : IN STD_LOGIC;
+		 pinc_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
+		 sine : OUT STD_LOGIC_VECTOR(9 DOWNTO 0)
+	  );
+	END COMPONENT;
+	
+	COMPONENT stereo_adc
+	PORT(
+		clk_i : IN std_logic;
+		areset_i : IN std_logic;
+		adc0_sdi_i : IN std_logic;
+		adc1_sdi_i : IN std_logic;
+		en_sampl_i : IN std_logic;          
+		adc0_sclk_o : OUT std_logic;
+		adc0_ncs_o : OUT std_logic;
+		adc1_sclk_o : OUT std_logic;
+		adc1_ncs_o : OUT std_logic;
+		lpr_o : OUT std_logic_vector(15 downto 0);
+		lmr_o : OUT std_logic_vector(15 downto 0)
+		);
+	END COMPONENT;
+
+	
 constant cLEDPort : std_logic_vector(7 downto 0) := X"00";
 constant cBTNPort : std_logic_vector(7 downto 0) := X"00";
 
@@ -166,8 +191,16 @@ constant cRxUARTDataPort : std_logic_vector(7 downto 0) := X"02";
 constant cUARTStatusPort : std_logic_vector(7 downto 0) := X"01";
 constant cUARTRstPort : std_logic_vector(3 downto 0) := X"0";
 
-constant cDAC1_15_8Port : std_logic_vector(7 downto 0) := X"03";
-constant cDAC1_07_0Port : std_logic_vector(7 downto 0) := X"04";
+constant cDAC1_07_00Port : std_logic_vector(7 downto 0) := X"03";
+constant cDAC1_15_08Port : std_logic_vector(7 downto 0) := X"04";
+
+constant cDAC0_07_00Port : std_logic_vector(7 downto 0) := X"05";
+constant cDAC0_15_08Port : std_logic_vector(7 downto 0) := X"06";
+constant cDAC0_23_16Port : std_logic_vector(7 downto 0) := X"07";
+constant cDAC0_31_24Port : std_logic_vector(7 downto 0) := X"08";
+
+constant cDAC0_21_1MHz_phInc : std_logic_vector(24 downto 0) := "0010110100000011010110101";
+constant cDAC0_30Hz_Offset : std_logic_vector(15 downto 0):= X"0008";
 	-----------------------------------------------------------------------------
 	--								SIGNALS
 	-----------------------------------------------------------------------------
@@ -175,7 +208,10 @@ constant cDAC1_07_0Port : std_logic_vector(7 downto 0) := X"04";
 	-- Central signals
 signal sCentralReset : std_logic := '0';
 signal sCLK16MHz : std_logic := '0';
+signal sCLK120MHz : std_logic := '0';
+signal sNCLK120MHz : std_logic := '0';
 signal sEn16x57600 : std_logic := '0';
+signal sEn44kHz : std_logic := '0';
 
 	-- Picoblaze
 signal sMcuAddress : std_logic_vector(11 downto 0) := (others => '0');
@@ -214,6 +250,14 @@ signal sDAC1BufferedValue : std_logic_vector(15 downto 0) := (others => '0');
 signal sDAC1ReadyValue : std_logic_vector(15 downto 0) := (others => '0');
 signal sDAC1WritePortReq : std_logic := '0';
 signal sDAC1WritePortAck : std_logic := '0';
+
+ -- DAC0
+signal sDDSphInc : std_logic_vector(24 downto 0) := (others => '0');
+--signal sDDSphIncCtrl : std_logic_vector(24 downto 0) := (others => '0');
+signal sDDSphIncCtrl : std_logic_vector(24 downto 0) := cDAC0_21_1MHz_phInc;
+
+ -- AUDIO
+signal sAudioLpR : std_logic_vector(15 downto 0):= (others => '0');
 begin
 
 	-----------------------------------------------------------------------------
@@ -295,11 +339,19 @@ begin
 						LEDS <= sMcuOutPort(7 downto 4);
 					when cTxUARTDataPort => 
 						sTxUARTdata <= sMcuOutPort;
-					when cDAC1_15_8Port =>
+					when cDAC1_15_08Port =>
 						sDAC1BufferedValue(15 downto 8) <= sMcuOutPort(7 downto 0);
-					when cDAC1_07_0Port =>
+					when cDAC1_07_00Port =>
 						sDAC1BufferedValue(7 downto 0) <= sMcuOutPort(7 downto 0);
 						sDAC1WritePortReq <= '1';
+					when cDAC0_31_24Port => 
+						sDDSphIncCtrl(24) <= sMcuOutPort(0);
+					when cDAC0_23_16Port =>
+						sDDSphIncCtrl(23 downto 16) <= sMcuOutPort(7 downto 0);
+					when cDAC0_15_08Port =>
+						sDDSphIncCtrl(15 downto 8) <= sMcuOutPort(7 downto 0);
+					when cDAC0_07_00Port =>
+						sDDSphIncCtrl(7 downto 0) <= sMcuOutPort(7 downto 0);
 					when others =>
 				end case;
 			end if;
@@ -381,7 +433,7 @@ begin
 	-----------------------------------------------------------------------------
 	 pll : clkup port map(
     CLK_IN1 => CLK,
-    CLK_OUT1 => open,
+    CLK_OUT1 => sCLK120MHz,
     CLK_OUT2 => sCLK16MHz);
 	 
 	clkdiv: clk_enabler PORT MAP(
@@ -389,13 +441,16 @@ begin
 		areset_i => sCentralReset,
 		en16x57600_o => sEn16x57600,
 		en1ms_o => open,  -- connect debouncer, picoblaze ISR
-		en44kHz_o => open);  -- connect audio ADC
+		en44kHz_o => sEn44kHz);  -- connect audio ADC
 		
 	-----------------------------------------------------------------------------
 	-----------------------------------------------------------------------------
 	--								 		DAC 1 
 	-----------------------------------------------------------------------------
 	-----------------------------------------------------------------------------	
+	
+		-- VCO frequency control through DAC1 voltage 
+		
 		vco: da1_interface PORT MAP(
 		clk_i => sCLK16MHz,
 		reset_i => sCentralReset,
@@ -418,15 +473,64 @@ begin
 			end if;
 		end process;
 		
+		-----------------------------------------------------------------------------
+		-----------------------------------------------------------------------------
+		--								 		DAC 0 
+		-----------------------------------------------------------------------------
+		-----------------------------------------------------------------------------	
 		
-		ADC0_SCLK <= '0';
-		ADC0_NCS <= '0';
+		-- phInc expression: Preset Broadcast FM + Mono L+R + 30Hz offset => FM mono
+		sDDSphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioLpR) + unsigned(cDAC0_30Hz_Offset));
+
+		-- main DDS FM modulator
+		FM_Mono : DDS_RF
+	  PORT MAP (
+		 clk => sCLK120MHz,
+		 pinc_in => sDDSphInc,
+		 sine => DAC0_DATA
+	  );
 		
-		ADC1_SCLK <= '0';
-		ADC1_NCS <= '0';
 		
-		DAC0_DATA <= (others => '0');
-		DAC0_CLK <= '0';
+		-- XILINX primitive to buffer-out CLK bus signal
+		sNCLK120MHz <= not(sCLK120MHz);
+		DA0_CLK_O : ODDR2
+		generic map(
+		  DDR_ALIGNMENT => "NONE",
+		  INIT => '0',
+		  SRTYPE => "SYNC")
+		port map (
+		  Q => DAC0_CLK,
+		  C0 => sCLK120MHz,
+		  C1 => sNCLK120MHz,
+		  CE => '1',
+		  D0 => '1',
+		  D1 => '0',
+		  R => sCentralReset,
+		  S =>'0'
+		);
+		
+		
+	
+		-----------------------------------------------------------------------------
+		-----------------------------------------------------------------------------
+		--								 		AUDIO
+		-----------------------------------------------------------------------------
+		-----------------------------------------------------------------------------	
+		
+		audio: stereo_adc PORT MAP(
+		clk_i => sCLK16MHz,
+		areset_i => sCentralReset,
+		adc0_sclk_o => ADC0_SCLK,
+		adc0_sdi_i => ADC0_SDI,
+		adc0_ncs_o => ADC0_NCS,
+		adc1_sclk_o => ADC1_SCLK,
+		adc1_sdi_i => ADC1_SDI,
+		adc1_ncs_o => ADC1_NCS,
+		en_sampl_i => sEn44kHz,
+		lpr_o => sAudioLpR,
+		lmr_o => open
+	);
+		
 		
 end Behavioral;
 
