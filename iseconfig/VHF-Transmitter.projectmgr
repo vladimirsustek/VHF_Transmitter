@@ -10,17 +10,20 @@
          <ClosedNode>/adc_interface - Behavioral C:|VHF-Transmitter|adc_interface.vhd</ClosedNode>
          <ClosedNode>/adc_interface - Behavioral C:|VHF_Transmitter|adc_interface.vhd</ClosedNode>
          <ClosedNode>/da1_interface - Behavioral C:|VHF-Transmitter|da1_interface.vhd</ClosedNode>
+         <ClosedNode>/stereo_adc - Behavioral C:|VHF_Transmitter|stereo_adc.vhd</ClosedNode>
          <ClosedNode>/top - Behavioral C:|VHF-Transmitter|top.vhd/program_rom - MAIN - low_level_definition</ClosedNode>
+         <ClosedNode>/top - Behavioral C:|VHF_Transmitter|top.vhd/audio - stereo_adc - Behavioral</ClosedNode>
+         <ClosedNode>/top - Behavioral C:|VHF_Transmitter|top.vhd/program_rom - MAIN - low_level_definition</ClosedNode>
          <ClosedNode>/top - Behavioral C:|VHF_Transmitter|top.vhd/vco - da1_interface - Behavioral</ClosedNode>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem>top - Behavioral (C:/VHF_Transmitter/top.vhd)</SelectedItem>
+         <SelectedItem>top.ucf (C:/VHF_Transmitter/top.ucf)</SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000001000000000000000000000000000000000202000000010000000100000064000001ec000000020000000000000000000000000200000064ffffffff000000810000000300000002000001ec0000000100000003000000000000000100000003</ViewHeaderState>
+      <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000001000000000000000000000000000000000202000000010000000100000064000001c7000000020000000000000000000000000200000064ffffffff000000810000000300000002000001c70000000100000003000000000000000100000003</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >true</UserChangedColumnWidths>
-      <CurrentItem>top - Behavioral (C:/VHF_Transmitter/top.vhd)</CurrentItem>
+      <CurrentItem>top.ucf (C:/VHF_Transmitter/top.ucf)</CurrentItem>
    </ItemView>
    <ItemView engineview="SynthesisOnly" sourcetype="" guiview="Process" >
       <ClosedNodes>
@@ -28,13 +31,13 @@
          <ClosedNode>Design Utilities</ClosedNode>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem/>
+         <SelectedItem></SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
       <ViewHeaderState orientation="horizontal" >000000ff00000000000000010000000100000000000000000000000000000000000000000000000206000000010000000100000000000000000000000064ffffffff000000810000000000000001000002060000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
-      <CurrentItem/>
+      <CurrentItem></CurrentItem>
    </ItemView>
    <ItemView guiview="File" >
       <ClosedNodes>
@@ -43,7 +46,7 @@
       <SelectedItems/>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000000000000000100000000000000000000000000000000000003a3000000040101000100000000000000000000000064ffffffff000000810000000000000004000000480000000100000000000000270000000100000000000000760000000100000000000002be0000000100000000</ViewHeaderState>
+      <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000000000000001000000000000000000000000000000000000038e000000040101000100000000000000000000000064ffffffff000000810000000000000004000000480000000100000000000000270000000100000000000000760000000100000000000002a90000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
       <CurrentItem>adc_interface.vhd</CurrentItem>
    </ItemView>
@@ -62,17 +65,21 @@
    <ItemView engineview="BehavioralSim" guiview="Source" compilemode="AutoCompile" >
       <ClosedNodes>
          <ClosedNodesVersion>2</ClosedNodesVersion>
+         <ClosedNode>/stereo_adc - Behavioral C:|VHF_Transmitter|stereo_adc.vhd</ClosedNode>
+         <ClosedNode>/tb_stereo_adc - behavior C:|VHF_Transmitter|tb_stereo_adc.vhd/uut - stereo_adc - Behavioral</ClosedNode>
+         <ClosedNode>/tb_top - behavior C:|VHF_Transmitter|tb_top.vhd</ClosedNode>
+         <ClosedNode>/tb_top - behavior C:|VHF_Transmitter|tb_top.vhd/uut - top - Behavioral/audio - stereo_adc - Behavioral</ClosedNode>
          <ClosedNode>/tb_top - behavior C:|VHF_Transmitter|tb_top.vhd/uut - top - Behavioral/program_rom - MAIN - low_level_definition</ClosedNode>
          <ClosedNode>/tb_top - behavior C:|VHF_Transmitter|tb_top.vhd/uut - top - Behavioral/vco - da1_interface - Behavioral</ClosedNode>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem>tb_top - behavior (C:/VHF_Transmitter/tb_top.vhd)</SelectedItem>
+         <SelectedItem>tb_clk_enabler - behavior (C:/VHF_Transmitter/tb_clk_enabler.vhd)</SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000002020000000100000001000000640000021f000000020000000000000000000000000200000064ffffffff0000008100000003000000020000021f0000000100000003000000000000000100000003</ViewHeaderState>
+      <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000002020000000100000001000000640000018a000000020000000000000000000000000200000064ffffffff0000008100000003000000020000018a0000000100000003000000000000000100000003</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >true</UserChangedColumnWidths>
-      <CurrentItem>tb_top - behavior (C:/VHF_Transmitter/tb_top.vhd)</CurrentItem>
+      <CurrentItem>tb_clk_enabler - behavior (C:/VHF_Transmitter/tb_clk_enabler.vhd)</CurrentItem>
    </ItemView>
    <ItemView engineview="BehavioralSim" sourcetype="" guiview="Process" >
       <ClosedNodes>
@@ -80,13 +87,13 @@
          <ClosedNode>Design Utilities</ClosedNode>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem/>
+         <SelectedItem></SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
       <ViewHeaderState orientation="horizontal" >000000ff00000000000000010000000100000000000000000000000000000000000000000000000206000000010000000100000000000000000000000064ffffffff000000810000000000000001000002060000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
-      <CurrentItem/>
+      <CurrentItem></CurrentItem>
    </ItemView>
    <ItemView engineview="SynthesisOnly" sourcetype="DESUT_VHDL_ARCHITECTURE" guiview="Process" >
       <ClosedNodes>
@@ -108,33 +115,18 @@
          <ClosedNodesVersion>1</ClosedNodesVersion>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem/>
+         <SelectedItem></SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
       <ViewHeaderState orientation="horizontal" >000000ff00000000000000010000000100000000000000000000000000000000000000000000000206000000010000000100000000000000000000000064ffffffff000000810000000000000001000002060000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
-      <CurrentItem/>
+      <CurrentItem></CurrentItem>
    </ItemView>
    <ItemView engineview="SynthesisOnly" sourcetype="DESUT_UCF" guiview="Process" >
       <ClosedNodes>
          <ClosedNodesVersion>1</ClosedNodesVersion>
          <ClosedNode>User Constraints</ClosedNode>
-      </ClosedNodes>
-      <SelectedItems>
-         <SelectedItem/>
-      </SelectedItems>
-      <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
-      <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff00000000000000010000000100000000000000000000000000000000000000000000000206000000010000000100000000000000000000000064ffffffff000000810000000000000001000002060000000100000000</ViewHeaderState>
-      <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
-      <CurrentItem/>
-   </ItemView>
-   <SourceProcessView>000000ff0000000000000002000001390000011b01000000050100000002</SourceProcessView>
-   <CurrentView>Implementation</CurrentView>
-   <ItemView engineview="BehavioralSim" sourcetype="DESUT_VHDL_ARCHITECTURE" guiview="Process" >
-      <ClosedNodes>
-         <ClosedNodesVersion>1</ClosedNodesVersion>
       </ClosedNodes>
       <SelectedItems>
          <SelectedItem></SelectedItem>
@@ -144,5 +136,20 @@
       <ViewHeaderState orientation="horizontal" >000000ff00000000000000010000000100000000000000000000000000000000000000000000000206000000010000000100000000000000000000000064ffffffff000000810000000000000001000002060000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
       <CurrentItem></CurrentItem>
+   </ItemView>
+   <SourceProcessView>000000ff0000000000000002000001390000011b01000000050100000002</SourceProcessView>
+   <CurrentView>Implementation</CurrentView>
+   <ItemView engineview="BehavioralSim" sourcetype="DESUT_VHDL_ARCHITECTURE" guiview="Process" >
+      <ClosedNodes>
+         <ClosedNodesVersion>1</ClosedNodesVersion>
+      </ClosedNodes>
+      <SelectedItems>
+         <SelectedItem>Simulate Behavioral Model</SelectedItem>
+      </SelectedItems>
+      <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
+      <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
+      <ViewHeaderState orientation="horizontal" >000000ff00000000000000010000000100000000000000000000000000000000000000000000000206000000010000000100000000000000000000000064ffffffff000000810000000000000001000002060000000100000000</ViewHeaderState>
+      <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
+      <CurrentItem>Simulate Behavioral Model</CurrentItem>
    </ItemView>
 </Project>

@@ -37,7 +37,7 @@ entity adc_interface is
 			  mosi_o : out STD_LOGIC;
 			  sclk_o : out STD_LOGIC;
 			  ncs_o : out STD_LOGIC;
-			  data_o : out STD_LOGIC_VECTOR(7 downto 0));
+			  data_o : out STD_LOGIC_VECTOR(15 downto 0));
 end adc_interface;
 
 architecture Behavioral of adc_interface is
@@ -83,7 +83,7 @@ begin
 				sigSPI_RST <= '0';
 				sigSPI_St <= CONVERSION;
 			elsif sigSPI_St = CONVERSION and sigSPI_Rdy = '1' and clk_en_i = '1' then
-				sigSPI_Data_q <= std_logic_vector(shift_right(unsigned(sigSPI_Data_d),8));
+				sigSPI_Data_q <= std_logic_vector(shift_right(unsigned(sigSPI_Data_d),4));
 				sigSPI_RST <= '1';
 				sigSPI_St <= RESET;
 			end if;
@@ -108,7 +108,7 @@ begin
 		data_o => sigSPI_Data_d,
 		rdy_o => sigSPI_Rdy
 	);
-	data_o <= sigSPI_Data_q(7 downto 0);
+	data_o <= sigSPI_Data_q;
 
 end Behavioral;
 

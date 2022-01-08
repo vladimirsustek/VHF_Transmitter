@@ -42,6 +42,7 @@ ARCHITECTURE behavior OF tb_top IS
     COMPONENT top
     PORT(
          CLK : IN  std_logic;
+         CLK_LFC : IN  std_logic;
          BTNS : IN  std_logic_vector(1 downto 0);
          LEDS : OUT  std_logic_vector(3 downto 0);
          UART_TX : OUT  std_logic;
@@ -68,6 +69,7 @@ ARCHITECTURE behavior OF tb_top IS
 
    --Inputs
    signal CLK : std_logic := '0';
+   signal CLK_LFC : std_logic := '0';
    signal BTNS : std_logic_vector(1 downto 0) := (others => '0');
    signal UART_RX : std_logic := '0';
    signal DAC1_NRESET : std_logic := '0';
@@ -99,6 +101,7 @@ BEGIN
 	-- Instantiate the Unit Under Test (UUT)
    uut: top PORT MAP (
           CLK => CLK,
+          CLK_LFC => CLK_LFC,
           BTNS => BTNS,
           LEDS => LEDS,
           UART_TX => UART_TX,

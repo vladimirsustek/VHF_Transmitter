@@ -39,6 +39,8 @@ entity stereo_adc is
            adc1_sdi_i : in  STD_LOGIC;
            adc1_ncs_o : out  STD_LOGIC;
            en_sampl_i : in  STD_LOGIC;
+			  dac0_o : out STD_LOGIC_VECTOR(7 downto 0);
+			  dac1_o : out STD_LOGIC_VECTOR(7 downto 0);
            lpr_o : out  STD_LOGIC_VECTOR(15 downto 0);
            lmr_o : out  STD_LOGIC_VECTOR(15 downto 0));
 end stereo_adc;

@@ -49,7 +49,7 @@ begin
 -- 16MHz/(17.5) = 57142kHz ~ 0.8% error 
 en16xsEn16x57600 : process(clk_i, areset_i)
 
-variable vCount : integer range 0 to 64 := 0;
+variable vCount : integer range 0 to 63 := 0;
 
 begin
 	if areset_i = '1' then
@@ -70,15 +70,45 @@ begin
 	en16x57600_o <= sEn16x57600;
 end process;
 
-en1ms : process(clk_i, areset_i)
-begin
-en1ms_o <= sEn1ms;
-end process;
+en1ms: process(clk_i, areset_i)
 
-en144kHz : process(clk_i, areset_i)
+variable vCount : integer range 0 to 16383 := 0;
+
 begin
-en44kHz_o <= sEn44kHz;
-end process;
+	if areset_i = '1' then
+		vCount := 0;
+		sEn1ms <= '0';
+	elsif rising_edge(clk_i) then
+		if vCount = 15999 then
+			sEn1ms <= '1';
+			vCount := 0;
+		else
+			sEn1ms <= '0';
+			vCount := vCount + 1;
+		end if;
+	end if;
+	en1ms_o <= sEn1ms;
+end process; 
+
+en44kHz : process(clk_i, areset_i)
+
+variable vCount : integer range 0 to 511 := 0;
+
+begin
+	if areset_i = '1' then
+		vCount := 0;
+		sEn44kHz <= '0';
+	elsif rising_edge(clk_i) then
+		if vCount = 362 then
+			sEn44kHz <= '1';
+			vCount := 0;
+		else
+			sEn44kHz <= '0';
+			vCount := vCount + 1;
+		end if;
+	end if;
+	en44kHz_o <= sEn44kHz;
+end process; 
 
 end Behavioral;
 
