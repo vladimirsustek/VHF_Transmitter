@@ -72,7 +72,8 @@ architecture Behavioral of top is
 		areset_i : IN std_logic;          
 		en16x57600_o : OUT std_logic;
 		en1ms_o : OUT std_logic;
-		en44kHz_o : OUT std_logic
+		en44kHz_o : OUT std_logic;
+		tick1ms_o : out STD_LOGIC_VECTOR(31 downto 0)
 		);
 	END COMPONENT;
 
@@ -211,10 +212,10 @@ constant cBTNPort : std_logic_vector(7 downto 0) := X"00";
 constant cUARTStatusPort : std_logic_vector(7 downto 0) := X"01";
 constant cRxUARTDataPort : std_logic_vector(7 downto 0) := X"02";
 
-constant sADC0Read15_08Port : std_logic_vector(7 downto 0) := X"03";
-constant sADC0Read07_00Port : std_logic_vector(7 downto 0) := X"04";
-constant sADC1Read15_08Port : std_logic_vector(7 downto 0) := X"05";
-constant sADC1Read07_00Port : std_logic_vector(7 downto 0) := X"06";
+constant sTickRead31_25Port : std_logic_vector(7 downto 0) := X"03";
+constant sTickRead24_16Port : std_logic_vector(7 downto 0) := X"04";
+constant sTickRead15_08Port : std_logic_vector(7 downto 0) := X"05";
+constant sTickRead07_00Port : std_logic_vector(7 downto 0) := X"06";
 
 	-- output ports
 constant cLEDPort : std_logic_vector(7 downto 0) := X"00";
@@ -298,6 +299,9 @@ signal sAudioTestSource : std_logic := '0';
  -- TEST
 signal sAudioTestPhInc : std_logic_vector(15 downto 0) := (others => '0');
 signal sAudioTestSine : std_logic_vector(11 downto 0) := (others => '0');
+
+ -- TICK
+signal sTick1ms : std_logic_vector(31 downto 0):= (others => '0');
 
 begin
 
@@ -429,6 +433,14 @@ begin
 					sMcuInPort(2) <= sRxUARTFull;
 				when cRxUARTDataPort =>
 					sMcuInPort <= sRxUARTdata;
+				when sTickRead31_25Port =>
+					sMcuInPort <= sTick1ms(31 downto 24);
+				when sTickRead24_16Port =>
+					sMcuInPort <= sTick1ms(23 downto 16);
+				when sTickRead15_08Port =>
+					sMcuInPort <= sTick1ms(15 downto 08);
+				when sTickRead07_00Port =>
+					sMcuInPort <= sTick1ms(07 downto 00);
 				when others =>
 					sMcuInPort <= (others => 'X');
 			end  case;
@@ -484,7 +496,8 @@ begin
 		areset_i => sCentralReset,
 		en16x57600_o => sEn16x57600,
 		en1ms_o => open,  -- connect debouncer, picoblaze ISR
-		en44kHz_o => sEn44kHz);  -- connect audio ADC
+		en44kHz_o => sEn44kHz,
+		tick1ms_o => sTick1ms);  -- connect audio ADC
 		
 	-----------------------------------------------------------------------------
 	-----------------------------------------------------------------------------

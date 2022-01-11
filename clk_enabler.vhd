@@ -22,7 +22,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+use IEEE.NUMERIC_STD.ALL;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx primitives in this code.
@@ -34,7 +34,8 @@ entity clk_enabler is
            areset_i : in  STD_LOGIC;
            en16x57600_o : out  STD_LOGIC;
            en1ms_o : out  STD_LOGIC;
-           en44kHz_o : out  STD_LOGIC);
+           en44kHz_o : out  STD_LOGIC;
+			  tick1ms_o : out STD_LOGIC_VECTOR(31 downto 0));
 end clk_enabler;
 
 architecture Behavioral of clk_enabler is
@@ -42,7 +43,7 @@ architecture Behavioral of clk_enabler is
 signal sEn16x57600 : STD_LOGIC := '0';
 signal sEn1ms : STD_LOGIC := '0';
 signal sEn44kHz : STD_LOGIC := '0';
-
+signal sTick1ms : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
 begin
 
 
@@ -82,12 +83,14 @@ begin
 		if vCount = 15999 then
 			sEn1ms <= '1';
 			vCount := 0;
+			sTick1ms <= std_logic_vector(unsigned(sTick1ms) + 1);
 		else
 			sEn1ms <= '0';
 			vCount := vCount + 1;
 		end if;
 	end if;
 	en1ms_o <= sEn1ms;
+	tick1ms_o <= sTick1ms;
 end process; 
 
 en44kHz : process(clk_i, areset_i)

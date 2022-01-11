@@ -1,10 +1,23 @@
 SYS_READY_MSG:  STRING READY_MSG$, "Ready!"
 				OUTPUTK READY_MSG$, 1
 				OUTPUTK 0A, 1
-				LOAD s9, F0
+				
+				LOAD s9, 80
 				OUTPUT s9, 00
 				CALL DELAY_100MS
+	
+				LOAD s9, C0
+				OUTPUT s9, 00
 				CALL DELAY_100MS
+
+				LOAD s9, E0
+				OUTPUT s9, 00
+				CALL DELAY_100MS
+
+				LOAD s9, F0
+				OUTPUT s9, 00
+				CALL DELAY_100MS				
+				
 				LOAD s9, 00
 				OUTPUT s9, 00
 				RETURN
