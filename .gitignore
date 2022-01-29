@@ -10,3 +10,7 @@
 *.html
 *.xml
 *.bak
+*.xreport
+*.out
+*.tcl
+fm_transmitter.bit
