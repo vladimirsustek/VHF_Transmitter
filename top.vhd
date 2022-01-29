@@ -36,8 +36,11 @@ entity top is
 				BTNS : in  STD_LOGIC_VECTOR (1 downto 0);
 				LEDS : out  STD_LOGIC_VECTOR (3 downto 0);
 				
+				UART_NRTS : in STD_LOGIC;
 				UART_TX : out STD_LOGIC;
 				UART_RX : in STD_LOGIC;
+				UART_NCTS : in STD_LOGIC;
+				UART_GND : out STD_LOGIC;
 				
 				DAC1_NRESET : in std_logic;
 				DAC1_NCLEAR : in std_logic;
@@ -480,6 +483,8 @@ begin
 		buffer_reset => sRxUARTreset,
 		clk => sCLK16MHz
 	);
+	
+	UART_GND <= '0';
 	
 	-----------------------------------------------------------------------------
 	-----------------------------------------------------------------------------
