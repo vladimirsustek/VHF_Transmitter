@@ -169,24 +169,6 @@ architecture Behavioral of top is
 		 sine : OUT STD_LOGIC_VECTOR(9 DOWNTO 0)
 	  );
 	END COMPONENT;
-	
---	COMPONENT stereo_adc
---	PORT(
---		clk_i : IN std_logic;
---		areset_i : IN std_logic;
---		adc0_sdi_i : IN std_logic;
---		adc1_sdi_i : IN std_logic;
---		en_sampl_i : IN std_logic;          
---		adc0_sclk_o : OUT std_logic;
---		adc0_ncs_o : OUT std_logic;
---		adc1_sclk_o : OUT std_logic;
---		adc1_ncs_o : OUT std_logic;
---		dac0_o : out STD_LOGIC_VECTOR(7 downto 0);
---		dac1_o : out STD_LOGIC_VECTOR(7 downto 0);
---		lpr_o : OUT std_logic_vector(15 downto 0);
---		lmr_o : OUT std_logic_vector(15 downto 0)
---		);
---	END COMPONENT;
 
 	COMPONENT DDS_LF
 	  PORT (
@@ -290,7 +272,6 @@ signal sDAC1WritePortAck : std_logic := '0';
 
  -- DAC0
 signal sDDSphInc : std_logic_vector(24 downto 0) := (others => '0');
---signal sDDSphIncCtrl : std_logic_vector(24 downto 0) := (others => '0');
 signal sDDSphIncCtrl : std_logic_vector(24 downto 0) := cDAC0_21_1MHz_phInc;
 
  -- AUDIO

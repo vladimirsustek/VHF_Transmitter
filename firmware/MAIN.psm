@@ -6,6 +6,7 @@ NAMEREG sE, BUFF_DATA
 NAMEREG sD, BUFF_ISLF
 NAMEREG sC, BUFF_HEAD
 
+; KCPSM6 picoblaze needs some time for something like a "boot"
 CALL DELAY_100MS
 
 CALL UART_RX_CLEAR

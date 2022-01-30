@@ -79,6 +79,7 @@ begin
 	if areset_i = '1' then
 		vCount := 0;
 		sEn1ms <= '0';
+		sTick1ms <= (others => '0');
 	elsif rising_edge(clk_i) then
 		if vCount = 15999 then
 			sEn1ms <= '1';
