@@ -25,67 +25,79 @@
 --    (c) Copyright 1995-2022 Xilinx, Inc.                                    --
 --    All rights reserved.                                                    --
 --------------------------------------------------------------------------------
-
 --------------------------------------------------------------------------------
---    Generated from core with identifier: xilinx.com:ip:dds_compiler:4.0     --
---                                                                            --
---    The Xilinx DDS Compiler LogiCORE provides Direct Digital Synthesizers   --
---    (DDS) and optionally either Phase Generator or Sine/Cosine Lookup       --
---    Table constituent parts as independent cores. The core features sine,   --
---    cosine or quadrature outputs with 3 to 26-bit output sample             --
---    precision. The core supports up to 16 channels by time-sharing the      --
---    sine/cosine table which dramatically reduces the area requirement       --
---    when multiple channels are needed.  Phase Dithering and Taylor Series   --
---    Correction options provide high dynamic range signals using minimal     --
---    FPGA resources. In addition, the core has an optional phase offset      --
---    capability, providing support for multiple synthesizers with            --
---    precisely controlled phase differences.                                 --
---------------------------------------------------------------------------------
-
--- Interfaces:
---    addr_intf
---    clk_intf
---    sclr_intf
---    ce_intf
---    reg_select_intf
---    we_intf
---    data_intf
---    pinc_in_intf
---    poff_in_intf
---    phase_in_intf
---    rdy_intf
---    rfd_intf
---    channel_intf
---    cosine_intf
---    sine_intf
---    phase_out_intf
-
--- The following code must appear in the VHDL architecture header:
-
-------------- Begin Cut here for COMPONENT Declaration ------ COMP_TAG
-COMPONENT DDS_LF
-  PORT (
-    clk : IN STD_LOGIC;
-    pinc_in : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-    sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
-  );
-END COMPONENT;
--- COMP_TAG_END ------ End COMPONENT Declaration ------------
-
--- The following code must appear in the VHDL architecture
--- body. Substitute your own instance name and net names.
-
-------------- Begin Cut here for INSTANTIATION Template ----- INST_TAG
-your_instance_name : DDS_LF
-  PORT MAP (
-    clk => clk,
-    pinc_in => pinc_in,
-    sine => sine
-  );
--- INST_TAG_END ------ End INSTANTIATION Template ------------
-
--- You must compile the wrapper file DDS_LF.vhd when simulating
--- the core, DDS_LF. When compiling the wrapper file, be sure to
+-- You must compile the wrapper file stereo_mplx.vhd when simulating
+-- the core, stereo_mplx. When compiling the wrapper file, be sure to
 -- reference the XilinxCoreLib VHDL simulation library. For detailed
 -- instructions, please refer to the "CORE Generator Help".
 
+-- The synthesis directives "translate_off/translate_on" specified
+-- below are supported by Xilinx, Mentor Graphics and Synplicity
+-- synthesis tools. Ensure they are correct for your synthesis tool(s).
+
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+-- synthesis translate_off
+LIBRARY XilinxCoreLib;
+-- synthesis translate_on
+ENTITY stereo_mplx IS
+  PORT (
+    clk : IN STD_LOGIC;
+    channel : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
+  );
+END stereo_mplx;
+
+ARCHITECTURE stereo_mplx_a OF stereo_mplx IS
+-- synthesis translate_off
+COMPONENT wrapped_stereo_mplx
+  PORT (
+    clk : IN STD_LOGIC;
+    channel : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
+  );
+END COMPONENT;
+
+-- Configuration specification
+  FOR ALL : wrapped_stereo_mplx USE ENTITY XilinxCoreLib.dds_compiler_v4_0(behavioral)
+    GENERIC MAP (
+      c_accumulator_width => 16,
+      c_amplitude => 0,
+      c_channels => 2,
+      c_has_ce => 0,
+      c_has_channel_index => 1,
+      c_has_phase_out => 0,
+      c_has_phasegen => 1,
+      c_has_rdy => 0,
+      c_has_rfd => 0,
+      c_has_sclr => 0,
+      c_has_sincos => 1,
+      c_latency => -1,
+      c_mem_type => 1,
+      c_negative_cosine => 0,
+      c_negative_sine => 0,
+      c_noise_shaping => 0,
+      c_optimise_goal => 0,
+      c_output_width => 12,
+      c_outputs_required => 0,
+      c_phase_angle_width => 12,
+      c_phase_increment => 2,
+      c_phase_increment_value => "10011100,100111000,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+      c_phase_offset => 0,
+      c_phase_offset_value => "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+      c_por_mode => 0,
+      c_use_dsp48 => 0,
+      c_xdevicefamily => "spartan6"
+    );
+-- synthesis translate_on
+BEGIN
+-- synthesis translate_off
+U0 : wrapped_stereo_mplx
+  PORT MAP (
+    clk => clk,
+    channel => channel,
+    sine => sine
+  );
+-- synthesis translate_on
+
+END stereo_mplx_a;

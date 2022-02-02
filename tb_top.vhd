@@ -2,9 +2,9 @@
 -- Company: 
 -- Engineer:
 --
--- Create Date:   09:04:07 01/07/2022
+-- Create Date:   03:43:41 02/02/2022
 -- Design Name:   
--- Module Name:   C:/VHF_Transmitter/tb_top.vhd
+-- Module Name:   Z:/ise_repo/VHF_Transmitter/tb_top.vhd
 -- Project Name:  VHF-Transmitter
 -- Target Device:  
 -- Tool versions:  
@@ -45,8 +45,11 @@ ARCHITECTURE behavior OF tb_top IS
          CLK_LFC : IN  std_logic;
          BTNS : IN  std_logic_vector(1 downto 0);
          LEDS : OUT  std_logic_vector(3 downto 0);
+         UART_NRTS : IN  std_logic;
          UART_TX : OUT  std_logic;
          UART_RX : IN  std_logic;
+         UART_NCTS : IN  std_logic;
+         UART_GND : OUT  std_logic;
          DAC1_NRESET : IN  std_logic;
          DAC1_NCLEAR : IN  std_logic;
          DAC1_NALERT : IN  std_logic;
@@ -71,7 +74,9 @@ ARCHITECTURE behavior OF tb_top IS
    signal CLK : std_logic := '0';
    signal CLK_LFC : std_logic := '0';
    signal BTNS : std_logic_vector(1 downto 0) := (others => '0');
+   signal UART_NRTS : std_logic := '0';
    signal UART_RX : std_logic := '0';
+   signal UART_NCTS : std_logic := '0';
    signal DAC1_NRESET : std_logic := '0';
    signal DAC1_NCLEAR : std_logic := '0';
    signal DAC1_NALERT : std_logic := '0';
@@ -82,6 +87,7 @@ ARCHITECTURE behavior OF tb_top IS
  	--Outputs
    signal LEDS : std_logic_vector(3 downto 0);
    signal UART_TX : std_logic;
+   signal UART_GND : std_logic;
    signal DAC1_NLDAC : std_logic;
    signal DAC1_SCLK : std_logic;
    signal DAC1_NCS : std_logic;
@@ -104,8 +110,11 @@ BEGIN
           CLK_LFC => CLK_LFC,
           BTNS => BTNS,
           LEDS => LEDS,
+          UART_NRTS => UART_NRTS,
           UART_TX => UART_TX,
           UART_RX => UART_RX,
+          UART_NCTS => UART_NCTS,
+          UART_GND => UART_GND,
           DAC1_NRESET => DAC1_NRESET,
           DAC1_NCLEAR => DAC1_NCLEAR,
           DAC1_NALERT => DAC1_NALERT,
@@ -132,11 +141,14 @@ BEGIN
 		CLK <= '1';
 		wait for CLK_period/2;
    end process;
+ 
 
    -- Stimulus process
    stim_proc: process
    begin		
       -- hold reset state for 100 ns.
+      wait for 100 ns;	
+
       wait for CLK_period*10;
 
       -- insert stimulus here 

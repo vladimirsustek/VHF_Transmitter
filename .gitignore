@@ -13,4 +13,7 @@
 *.xreport
 *.out
 *.tcl
+*.prm
+*.sig
+*.xsl
 fm_transmitter.bit

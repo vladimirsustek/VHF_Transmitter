@@ -18,6 +18,7 @@
 --
 ----------------------------------------------------------------------------------
 library IEEE;
+
 use IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if using
@@ -28,6 +29,8 @@ use IEEE.NUMERIC_STD.ALL;
 -- any Xilinx primitives in this code.
 library UNISIM;
 use UNISIM.VComponents.all;
+
+
 
 entity top is
 		Port (CLK : in  STD_LOGIC;
@@ -75,19 +78,19 @@ architecture Behavioral of top is
 		areset_i : IN std_logic;          
 		en16x57600_o : OUT std_logic;
 		en1ms_o : OUT std_logic;
-		en44kHz_o : OUT std_logic;
 		tick1ms_o : out STD_LOGIC_VECTOR(31 downto 0)
 		);
 	END COMPONENT;
 
 	component clkup
-	port
-	 (-- Clock in ports
-	  CLK_IN1           : in     std_logic;
-	  -- Clock out ports
-	  CLK_OUT1          : out    std_logic;
-	  CLK_OUT2          : out    std_logic
-	 );
+		port
+		 (-- Clock in ports
+		  CLK_IN1           : in     std_logic;
+		  -- Clock out ports
+		  CLK_OUT1          : out    std_logic;
+		  CLK_OUT2          : out    std_logic;
+		  CLK_OUT3          : out    std_logic
+		 );
 	end component;
 
   component kcpsm6
@@ -173,7 +176,7 @@ architecture Behavioral of top is
 	COMPONENT DDS_LF
 	  PORT (
 		 clk : IN STD_LOGIC;
-		 pinc_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+		 pinc_in : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
 		 sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
 	  );
 	END COMPONENT;
@@ -182,7 +185,6 @@ architecture Behavioral of top is
 	PORT(
 		clk_i : IN std_logic;
 		reset_i : IN std_logic;
-		clk_en_i : IN std_logic;
 		miso_i : IN std_logic;          
 		mosi_o : OUT std_logic;
 		sclk_o : OUT std_logic;
@@ -190,6 +192,17 @@ architecture Behavioral of top is
 		data_o : OUT std_logic_vector(15 downto 0)
 		);
 	END COMPONENT;
+	
+	COMPONENT stereo_mplx
+		  PORT (
+			 clk : IN STD_LOGIC;
+			 channel : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+			 sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
+		  );
+	END COMPONENT;
+
+type tones_t is array (7 downto 0) of std_logic_vector(23 downto 0);
+constant cTones : tones_t := (X"000224", X"000267", X"0002B3", X"0002DB", X"000336", X"00039A", X"00040B", X"000449");
 
 -- PICOBLAZE CONSTANTS -----------------------------------------
 	-- input ports
@@ -220,17 +233,20 @@ constant cAudioSourcePort : std_logic_vector(7 downto 0) := X"09";
 
 constant cDAC0_21_1MHz_phInc : std_logic_vector(24 downto 0) := "0010110100000011010110101";
 constant cDAC0_30Hz_Offset : std_logic_vector(15 downto 0):= X"0008";
+
+constant cMltChannel19kHz : std_logic_vector(0 downto 0) := "0";
+constant cMltChannel38kHz : std_logic_vector(0 downto 0) := "1";
 	-----------------------------------------------------------------------------
 	--								SIGNALS
 	-----------------------------------------------------------------------------
 	
 	-- Central signals
 signal sCentralReset : std_logic := '0';
+signal sCLK4MHz : std_logic := '0';
 signal sCLK16MHz : std_logic := '0';
 signal sCLK120MHz : std_logic := '0';
 signal sNCLK120MHz : std_logic := '0';
 signal sEn16x57600 : std_logic := '0';
-signal sEn44kHz : std_logic := '0';
 
 	-- Picoblaze
 signal sMcuAddress : std_logic_vector(11 downto 0) := (others => '0');
@@ -275,17 +291,27 @@ signal sDDSphInc : std_logic_vector(24 downto 0) := (others => '0');
 signal sDDSphIncCtrl : std_logic_vector(24 downto 0) := cDAC0_21_1MHz_phInc;
 
  -- AUDIO
-signal sADC0Read : std_logic_vector(15 downto 0):= (others => '0');
-signal sADC1Read : std_logic_vector(15 downto 0):= (others => '0');
-signal sAudioLpR : std_logic_vector(15 downto 0):= (others => '0');
-signal sAudioLpRMlt : std_logic_vector(15 downto 0):= (others => '0');
-signal sAudioTestSource : std_logic := '0';
+signal sAudioLeft : std_logic_vector(15 downto 0):= (others => '0');
+signal sAudioRight : std_logic_vector(15 downto 0):= (others => '0');
+
+signal sAudioLeftminusRight : std_logic_vector(15 downto 0):= (others => '0');
+signal sAudioLeftplusRight : std_logic_vector(15 downto 0) := (others => '0');
+signal sAudioSSBSC : std_logic_vector(31 downto 0) := (others => '0');
+signal sAudioMultiplexed : std_logic_vector(15 downto 0):= (others => '0');
+
  -- TEST
-signal sAudioTestPhInc : std_logic_vector(15 downto 0) := (others => '0');
+signal sAudioTestPhInc : std_logic_vector(23 downto 0) := (others => '0');
 signal sAudioTestSine : std_logic_vector(11 downto 0) := (others => '0');
+signal sAudioTestSource : std_logic := '0';
 
  -- TICK
 signal sTick1ms : std_logic_vector(31 downto 0):= (others => '0');
+
+-- STEREO MULTIPLEX
+signal sSine19Khz : std_logic_vector(15 downto 0):= (others => '0');
+signal sSine38Khz : std_logic_vector(15 downto 0):= (others => '0');
+signal sMltSine : std_logic_vector(11 downto 0):= (others => '0');
+signal sMltChanel : std_logic_vector(0 downto 0):= (others => '0');
 
 begin
 
@@ -307,6 +333,7 @@ begin
 			sMcuReset <= '0';
 		end if;
 	end process;
+	
 	-----------------------------------------------------------------------------
 	-----------------------------------------------------------------------------
 	--								 		PICOBLAZE 
@@ -475,14 +502,14 @@ begin
 	 pll : clkup port map(
     CLK_IN1 => CLK,
     CLK_OUT1 => sCLK120MHz,
-    CLK_OUT2 => sCLK16MHz);
+    CLK_OUT2 => sCLK16MHz,
+	 CLK_OUT3 => sCLK4MHz);
 	 
 	clkdiv: clk_enabler PORT MAP(
 		clk_i => sCLK16MHz,
 		areset_i => sCentralReset,
 		en16x57600_o => sEn16x57600,
-		en1ms_o => open,  -- connect debouncer, picoblaze ISR
-		en44kHz_o => sEn44kHz,
+		en1ms_o => open,  -- in future connect debouncer, picoblaze ISR
 		tick1ms_o => sTick1ms);  -- connect audio ADC
 		
 	-----------------------------------------------------------------------------
@@ -555,25 +582,23 @@ begin
 		-----------------------------------------------------------------------------	
 
 	left_channel: adc_interface PORT MAP(
-		clk_i => sCLK16MHz,
+		clk_i => sCLK4MHz,
 		reset_i => sCentralReset,
-		clk_en_i => sEn44kHz,
 		miso_i => ADC0_SDI,
 		mosi_o => open,
 		sclk_o => ADC0_SCLK,
 		ncs_o => ADC0_NCS,
-		data_o => sADC0Read
+		data_o => sAudioLeft
 	);
 
 	right_channel: adc_interface PORT MAP(
-		clk_i => sCLK16MHz,
+		clk_i => sCLK4MHz,
 		reset_i => sCentralReset,
-		clk_en_i => sEn44kHz,
 		miso_i => ADC1_SDI,
 		mosi_o => open,
 		sclk_o => ADC1_SCLK,
 		ncs_o => ADC1_NCS,
-		data_o => sADC1Read
+		data_o => sAudioRight
 	);
 	
 	sine : DDS_LF
@@ -583,29 +608,50 @@ begin
     sine => sAudioTestSine
   );
   
-   sweep_freq : process(CLK_LFC, sAudioTestPhInc)
+  ---------------------------------------------------------------------
+  
+  stero_circuit : stereo_mplx
+  PORT MAP (
+    clk => sCLK16MHz,
+    channel => sMltChanel,
+    sine => sMltSine
+  );
+  
+  
+  multiplexer : process(sMltSine, sMltChanel)
+  begin 
+		if sMltChanel(0) = '0' then
+			sSine19Khz <= std_logic_vector(X"0000" + unsigned(sMltSine));
+		else -- sMltSine = cMltChannel38kHz
+			sSine38Khz <= std_logic_vector(X"0000" + unsigned(sMltSine));
+		end if;
+  end process;
+  ---------------------------------------------------------------------
+  
+   test_tones : process(CLK_LFC, sAudioTestPhInc)
+	variable idx : integer range 0 to 7 := 0;
 	begin
 		if rising_edge(CLK_LFC) then
-			if sAudioTestPhInc = X"0009" then
-				sAudioTestPhInc <= X"0000";
+			if idx = 0 then
+				idx := 7;
 			else
-				sAudioTestPhInc <= std_logic_vector(unsigned(sAudioTestPhInc) + 1);
+				idx := idx - 1;
 			end if;
+			sAudioTestPhInc <= cTones(idx);
 		end if;
 	end process;
-		
-	audio_source : process(sCLK16MHz, sDDSphIncCtrl, sAudioTestSource, sADC0Read, sADC1Read)
+	
+	audio_source : process(sCLK16MHz, sDDSphIncCtrl, sAudioTestSource, sAudioRight, sAudioLeft, sAudioLeftplusRight, sAudioLeftminusRight)
    begin
 		if sAudioTestSource = '0' then
-				-- phInc expression: Preset Broadcast FM + Mono L+R + 30Hz offset => FM mono
-			sAudioLpR <= std_logic_vector(X"0000" + unsigned(sADC0Read(11 downto 4)) + unsigned(sADC1Read(11 downto 4)));
-			sAudioLpRMlt <= std_logic_vector(shift_left(unsigned(sAudioLpR), 3) + shift_right(unsigned(sAudioLpR), 3) + shift_right(unsigned(sAudioLpR), 6));
-			sDDSphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioLpRMlt) + unsigned(cDAC0_30Hz_Offset));
+			sAudioLeftplusRight <= std_logic_vector(unsigned(sAudioRight) + unsigned(sAudioLeft));
+			sAudioLeftminusRight <= std_logic_vector(unsigned(sAudioLeft) - unsigned(sAudioRight));
+			sAudioSSBSC <= (others => '0');
+			sDDSphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + shift_left(unsigned(sAudioLeftplusRight), 3) + shift_left(unsigned(sAudioLeftplusRight), 1) + unsigned(cDAC0_30Hz_Offset) + unsigned(sSine19Khz));
 		else
-			sDDSphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioTestSine) + unsigned(cDAC0_30Hz_Offset));
+			sDDSphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + shift_left((unsigned(sAudioTestSine) + unsigned(sAudioTestSine)), 3) + shift_left((unsigned(sAudioTestSine) + unsigned(sAudioTestSine)), 1) + unsigned(cDAC0_30Hz_Offset) + unsigned(sSine19Khz));
 		end if;
    end process;
-	
-	
+
 end Behavioral;
 

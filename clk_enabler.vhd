@@ -34,7 +34,6 @@ entity clk_enabler is
            areset_i : in  STD_LOGIC;
            en16x57600_o : out  STD_LOGIC;
            en1ms_o : out  STD_LOGIC;
-           en44kHz_o : out  STD_LOGIC;
 			  tick1ms_o : out STD_LOGIC_VECTOR(31 downto 0));
 end clk_enabler;
 
@@ -42,7 +41,6 @@ architecture Behavioral of clk_enabler is
 
 signal sEn16x57600 : STD_LOGIC := '0';
 signal sEn1ms : STD_LOGIC := '0';
-signal sEn44kHz : STD_LOGIC := '0';
 signal sTick1ms : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
 begin
 
@@ -92,26 +90,6 @@ begin
 	end if;
 	en1ms_o <= sEn1ms;
 	tick1ms_o <= sTick1ms;
-end process; 
-
-en44kHz : process(clk_i, areset_i)
-
-variable vCount : integer range 0 to 511 := 0;
-
-begin
-	if areset_i = '1' then
-		vCount := 0;
-		sEn44kHz <= '0';
-	elsif rising_edge(clk_i) then
-		if vCount = 362 then
-			sEn44kHz <= '1';
-			vCount := 0;
-		else
-			sEn44kHz <= '0';
-			vCount := vCount + 1;
-		end if;
-	end if;
-	en44kHz_o <= sEn44kHz;
 end process; 
 
 end Behavioral;

@@ -43,7 +43,7 @@ LIBRARY XilinxCoreLib;
 ENTITY DDS_LF IS
   PORT (
     clk : IN STD_LOGIC;
-    pinc_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    pinc_in : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
     sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
   );
 END DDS_LF;
@@ -53,7 +53,7 @@ ARCHITECTURE DDS_LF_a OF DDS_LF IS
 COMPONENT wrapped_DDS_LF
   PORT (
     clk : IN STD_LOGIC;
-    pinc_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    pinc_in : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
     sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
   );
 END COMPONENT;
@@ -61,7 +61,7 @@ END COMPONENT;
 -- Configuration specification
   FOR ALL : wrapped_DDS_LF USE ENTITY XilinxCoreLib.dds_compiler_v4_0(behavioral)
     GENERIC MAP (
-      c_accumulator_width => 16,
+      c_accumulator_width => 24,
       c_amplitude => 0,
       c_channels => 1,
       c_has_ce => 0,

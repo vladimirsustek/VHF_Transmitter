@@ -22,6 +22,8 @@ CONSTANT cDAC0_07_00Port, 05
 
 CONSTANT cAudioSourcePort, 09
 
+CONSTANT cSystemResetPort, 0A
+
 ;-----------------------------------------
 ; EACH commands needs always content of 15 characters:
 ; 
@@ -54,6 +56,9 @@ CMD_DA0STI: LOAD&RETURN s6, SDA0_STI$
 
 STRING SAUD_SRC$, "AU_SR_"
 CMD_AUDSRC: LOAD&RETURN s6, SAUD_SRC$
+
+STRING SSYS_SRS$, "SY_RS_"
+CMD_SYSRST: LOAD&RETURN s6, SSYS_SRS$
 
 ; This function is not intended to be called
 ; neither anyhow used, but by placing this 
@@ -124,6 +129,15 @@ RSP_TCKGET: CALL UART_TX_CLEAR
 			
 			RETURN
 
+STRING SRRST_PRC$, "SYS_RESET:"
+RSP_SYSRST:	OUTPUTK SRRST_PRC$, 1
+			OUTPUTK LF, 1
+			LOAD s6, FF
+			OUTPUT s6, cSystemResetPort
+			RETURN
+			
+			
+
 STRING SERR$, "CmdArgEr!"
 RSP_ERR:    CALL UART_TX_CLEAR
 			OUTPUTK SERR$, 1
@@ -165,7 +179,15 @@ CHECK_RECEIVED:	LOAD s9, BUFF_HEAD
 				LOAD s1, RSP_AUDSRC'upper
 				LOAD s0, RSP_AUDSRC'lower
 				CALL COMPARE_CMD
-										
+
+				LOAD BUFF_HEAD, s9
+				
+				LOAD s3, CMD_SYSRST'upper
+				LOAD s2, CMD_SYSRST'lower
+				LOAD s1, RSP_SYSRST'upper
+				LOAD s0, RSP_SYSRST'lower
+				CALL COMPARE_CMD
+				
 				CALL INIT_BUFF
 				RETURN				
 			

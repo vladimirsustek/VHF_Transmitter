@@ -63,10 +63,10 @@
 -- The following code must appear in the VHDL architecture header:
 
 ------------- Begin Cut here for COMPONENT Declaration ------ COMP_TAG
-COMPONENT DDS_LF
+COMPONENT stereo_mplx
   PORT (
     clk : IN STD_LOGIC;
-    pinc_in : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+    channel : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
   );
 END COMPONENT;
@@ -76,16 +76,16 @@ END COMPONENT;
 -- body. Substitute your own instance name and net names.
 
 ------------- Begin Cut here for INSTANTIATION Template ----- INST_TAG
-your_instance_name : DDS_LF
+your_instance_name : stereo_mplx
   PORT MAP (
     clk => clk,
-    pinc_in => pinc_in,
+    channel => channel,
     sine => sine
   );
 -- INST_TAG_END ------ End INSTANTIATION Template ------------
 
--- You must compile the wrapper file DDS_LF.vhd when simulating
--- the core, DDS_LF. When compiling the wrapper file, be sure to
+-- You must compile the wrapper file stereo_mplx.vhd when simulating
+-- the core, stereo_mplx. When compiling the wrapper file, be sure to
 -- reference the XilinxCoreLib VHDL simulation library. For detailed
 -- instructions, please refer to the "CORE Generator Help".
 

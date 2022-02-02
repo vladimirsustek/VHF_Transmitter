@@ -32,7 +32,6 @@ use IEEE.NUMERIC_STD.ALL;
 entity adc_interface is
     Port ( clk_i : in  STD_LOGIC;
 	        reset_i : in STD_LOGIC;
-	        clk_en_i : in STD_LOGIC;
 			  miso_i : in STD_LOGIC;
 			  mosi_o : out STD_LOGIC;
 			  sclk_o : out STD_LOGIC;
@@ -69,9 +68,32 @@ signal sigSPI_Data_q : STD_LOGIC_VECTOR(15 downto 0) := (others => '0');
 signal sigSPI_Data_d : STD_LOGIC_VECTOR(15 downto 0) := (others => '0');
 signal sigSPI_Rdy : STD_LOGIC := '0';
 signal sigSPI_RST : STD_LOGIC := '0';
+signal sEn44kHz : STD_LOGIC := '1';
+
+--constant cDivider : integer := 90; //16MHz/90 = ~44kHz
+constant cDivider : integer := 0;
 
 begin
 	
+
+en44kHz : process(clk_i, reset_i)
+
+variable vCount : integer range 0 to 127 := 0;
+
+begin
+	if reset_i = '1' then
+		vCount := 0;
+		sEn44kHz <= '0';
+	elsif falling_edge(clk_i) then
+		if vCount = cDivider then
+			sEn44kHz <= '1';
+			vCount := 0;
+		else
+			sEn44kHz <= '0';
+			vCount := vCount + 1;
+		end if;
+	end if;
+end process; 
 
 	control_spi : process(clk_i, reset_i)
 	begin
@@ -82,7 +104,7 @@ begin
 			if sigSPI_St = RESET then
 				sigSPI_RST <= '0';
 				sigSPI_St <= CONVERSION;
-			elsif sigSPI_St = CONVERSION and sigSPI_Rdy = '1' and clk_en_i = '1' then
+			elsif sigSPI_St = CONVERSION and sigSPI_Rdy = '1' and sEn44kHz = '1' then
 				sigSPI_Data_q <= std_logic_vector(shift_right(unsigned(sigSPI_Data_d),4));
 				sigSPI_RST <= '1';
 				sigSPI_St <= RESET;
