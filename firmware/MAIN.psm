@@ -12,11 +12,11 @@ CALL UART_RX_CLEAR
 CALL UART_TX_CLEAR
 CALL INIT_BUFF
 			
-infinite:		CALL UART_RX
-				COMPARE UART_STATUS, UART_RX_DATA_PRESENT
-				CALL Z, SAVE_BYTE
-				COMPARE BUFF_ISLF, LF
-				CALL Z, CHECK_RECEIVED
+infinite:		CALL UART_RX; get status of the UART
+				COMPARE UART_STATUS, UART_RX_DATA_PRESENT; if data present
+				CALL Z, SAVE_BYTE; save them to the RAM
+				COMPARE BUFF_ISLF, LF; and if the current char is <LF>
+				CALL Z, CHECK_RECEIVED; check the saved content, respectively initiate action
 				JUMP infinite
 
 SAVE_BYTE:		LOAD BUFF_DATA, UART_DATA
@@ -25,7 +25,6 @@ SAVE_BYTE:		LOAD BUFF_DATA, UART_DATA
 				
 INCLUDE "UART_MODULE.psm"
 INCLUDE "SW_DELAYS.psm"
-INCLUDE "GPIO_MODULE.psm"
 INCLUDE "RAM_BUFF.psm"
 INCLUDE "CLI_CMD.psm"
 INCLUDE "SYS_CALLS.psm"
