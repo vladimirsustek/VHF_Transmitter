@@ -62,6 +62,7 @@ entity top is
 				ADC1_SDI : in std_logic;
 				ADC1_NCS : out std_logic;
 				
+				RF_AMP : out std_logic;
 				DAC0_DATA : out std_logic_vector(9 downto 0);
 				DAC0_CLK : out std_logic);
 end top;
@@ -169,10 +170,26 @@ architecture Behavioral of top is
 	PORT (
 		 clk : IN STD_LOGIC;
 		 pinc_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
-		 sine : OUT STD_LOGIC_VECTOR(9 DOWNTO 0)
+		 sine : OUT STD_LOGIC_VECTOR(8 DOWNTO 0)
 	  );
 	END COMPONENT;
 
+	COMPONENT DDS_RF3
+	  PORT (
+		 clk : IN STD_LOGIC;
+		 pinc_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
+		 sine : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+	  );
+	END COMPONENT;
+	
+	COMPONENT DDS_RF_2
+	  PORT (
+		 clk : IN STD_LOGIC;
+		 pinc_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
+		 sine : OUT STD_LOGIC_VECTOR(5 DOWNTO 0)
+	  );
+	END COMPONENT;
+	
 	COMPONENT DDS_LF
 	  PORT (
 		 clk : IN STD_LOGIC;
@@ -200,12 +217,22 @@ architecture Behavioral of top is
 			 sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
 		  );
 	END COMPONENT;
+	
+	COMPONENT signal_operation
+	PORT (
+		a : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
+		b : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
+		clk : IN STD_LOGIC;
+		ce : IN STD_LOGIC;
+		s : OUT STD_LOGIC_VECTOR(9 DOWNTO 0)
+	);
+	END COMPONENT;
 
 type tones_t is array (7 downto 0) of std_logic_vector(23 downto 0);
 constant cTones : tones_t := (X"000224", X"000267", X"0002B3", X"0002DB", X"000336", X"00039A", X"00040B", X"000449");
 
 -- PICOBLAZE CONSTANTS -----------------------------------------
-	-- input ports
+-- input ports
 constant cBTNPort : std_logic_vector(7 downto 0) := X"00";
 constant cUARTStatusPort : std_logic_vector(7 downto 0) := X"01";
 constant cRxUARTDataPort : std_logic_vector(7 downto 0) := X"02";
@@ -215,7 +242,7 @@ constant sTickRead24_16Port : std_logic_vector(7 downto 0) := X"04";
 constant sTickRead15_08Port : std_logic_vector(7 downto 0) := X"05";
 constant sTickRead07_00Port : std_logic_vector(7 downto 0) := X"06";
 
-	-- output ports
+-- output ports
 constant cLEDPort : std_logic_vector(7 downto 0) := X"00";
 constant cTxUARTDataPort : std_logic_vector(7 downto 0) := X"01";
 constant cUARTRstPort : std_logic_vector(3 downto 0) := X"0";
@@ -228,27 +255,39 @@ constant cDAC0_15_08Port : std_logic_vector(7 downto 0) := X"06";
 constant cDAC0_23_16Port : std_logic_vector(7 downto 0) := X"07";
 constant cDAC0_31_24Port : std_logic_vector(7 downto 0) := X"08";
 
-constant cAudioSourcePort : std_logic_vector(7 downto 0) := X"09";
+constant cRFModePort : std_logic_vector(7 downto 0) := X"09";
+constant cSystemResetPort : std_logic_vector(7 downto 0) := X"0A";
 ----------------------------------------------------------------
 
 constant cDAC0_21_1MHz_phInc : std_logic_vector(24 downto 0) := "0010110100000011010110101";
 constant cDAC0_30Hz_Offset : std_logic_vector(15 downto 0):= X"0008";
 
-constant cMltChannel19kHz : std_logic_vector(0 downto 0) := "0";
-constant cMltChannel38kHz : std_logic_vector(0 downto 0) := "1";
+constant c38kHz : std_logic_vector(15 downto 0):= X"2981";
+constant c19kHz : std_logic_vector(15 downto 0):= X"14C0";
+
+constant cRFTestSine : std_logic_vector(7 downto 0) := X"01";
+constant cRFTestSinePilot : std_logic_vector(7 downto 0) := X"02";
+constant cRFMono : std_logic_vector(7 downto 0) := X"03";
+constant cRFMonoPilot : std_logic_vector(7 downto 0) := X"04";
+constant cRFMonoStereo : std_logic_vector(7 downto 0) := X"05";
+constant cRFMonoStereoPilot : std_logic_vector(7 downto 0) := X"06";
+
+constant cRFAmpStageOn : std_logic := '1';
+constant cRFAmpStageOff : std_logic := '0';
 	-----------------------------------------------------------------------------
 	--								SIGNALS
 	-----------------------------------------------------------------------------
 	
-	-- Central signals
+-- Central signals
 signal sCentralReset : std_logic := '0';
 signal sCLK4MHz : std_logic := '0';
 signal sCLK16MHz : std_logic := '0';
 signal sCLK120MHz : std_logic := '0';
 signal sNCLK120MHz : std_logic := '0';
 signal sEn16x57600 : std_logic := '0';
+signal sTick1ms : std_logic_vector(31 downto 0):= (others => '0');
 
-	-- Picoblaze
+-- Picoblaze
 signal sMcuAddress : std_logic_vector(11 downto 0) := (others => '0');
 signal sMcuInstruction : std_logic_vector(17 downto 0) := (others => '0');
 signal sMcuBramEnable : std_logic := '0';
@@ -264,7 +303,7 @@ signal sMcuSleep : std_logic := '0';
 signal sMcuReset : std_logic := '0';
 signal sROMResetDuringLoad : std_logic := '0';
 
-	-- TX UART
+-- TX UART
 signal sTxUARTreset : std_logic := '0';
 signal sTxUARTdata : std_logic_vector(7 downto 0) := (others => '0');
 signal sTxUARTOdata : std_logic_vector(7 downto 0) := (others => '0');
@@ -273,45 +312,48 @@ signal sTxUARTtxDataPresent : std_logic := '0';
 signal sTxUARTHalfFull : std_logic := '0';
 signal sTxUARTFull : std_logic := '0';
 signal sTxUARTWrite : std_logic := '0';
-   -- RX UART
+
+-- RX UART
 signal sRxUARTreset : std_logic := '0';
 signal sRxUARTrxDataPresent : std_logic := '0';
 signal sRxUARTHalfFull : std_logic := '0';
 signal sRxUARTFull : std_logic := '0';
 signal sRxUARTRead : std_logic := '0';
 signal sRxUARTdata : std_logic_vector(7 downto 0) := (others => '0');
-  -- DAC1
+
+-- RF DAC1
 signal sDAC1BufferedValue : std_logic_vector(15 downto 0) := (others => '0');
 signal sDAC1ReadyValue : std_logic_vector(15 downto 0) := (others => '0');
 signal sDAC1WritePortReq : std_logic := '0';
 signal sDAC1WritePortAck : std_logic := '0';
 
- -- DAC0
-signal sDDSphInc : std_logic_vector(24 downto 0) := (others => '0');
+-- RF DAC0
+signal sDDSMonophInc : std_logic_vector(24 downto 0) := (others => '0');
+signal sDDSPilotphInc : std_logic_vector(24 downto 0) := (others => '0');
+signal sDDSStereophInc : std_logic_vector(24 downto 0) := (others => '0');
+signal sDDSRDSphInc : std_logic_vector(24 downto 0) := (others => '0');
 signal sDDSphIncCtrl : std_logic_vector(24 downto 0) := cDAC0_21_1MHz_phInc;
+signal sDDSMono : std_logic_vector(8 downto 0) := (others => '0');
+signal sDDSPilot : std_logic_vector(5 downto 0) := (others => '0');
+signal sDDSStereo : std_logic_vector(7 downto 0) := (others => '0');
+signal sDDSRDS : std_logic_vector(4 downto 0) := (others => '0');
+signal sSumDDS : std_logic_vector(9 downto 0):= (others => '0');
+signal sRFMode : std_logic_vector(7 downto 0) := (others => '0');
 
  -- AUDIO
-signal sAudioLeft : std_logic_vector(15 downto 0):= (others => '0');
-signal sAudioRight : std_logic_vector(15 downto 0):= (others => '0');
-
-signal sAudioLeftminusRight : std_logic_vector(15 downto 0):= (others => '0');
-signal sAudioLeftplusRight : std_logic_vector(15 downto 0) := (others => '0');
+signal sAudioL : std_logic_vector(15 downto 0):= (others => '0');
+signal sAudioR : std_logic_vector(15 downto 0):= (others => '0');
+signal sAudioLmR : std_logic_vector(15 downto 0):= (others => '0');
+signal sAudioLpR : std_logic_vector(15 downto 0) := (others => '0');
 signal sAudioSSBSC : std_logic_vector(31 downto 0) := (others => '0');
-signal sAudioMultiplexed : std_logic_vector(15 downto 0):= (others => '0');
+signal sAudioMplx : std_logic_vector(12 downto 0):= (others => '0');
+signal sSinexxKHz : std_logic_vector(11 downto 0):= (others => '0');
+signal sSine38KHz : std_logic_vector(11 downto 0):= (others => '0');
+signal sSine19KHz : std_logic_vector(11 downto 0):= (others => '0');
+signal sSineChannel : std_logic_vector(0 downto 0):= (others => '0');
+signal sAudioTestToneSine : std_logic_vector(11 downto 0) := (others => '0');
+signal sAudioTestTonePhInc : std_logic_vector(23 downto 0) := (others => '0');
 
- -- TEST
-signal sAudioTestPhInc : std_logic_vector(23 downto 0) := (others => '0');
-signal sAudioTestSine : std_logic_vector(11 downto 0) := (others => '0');
-signal sAudioTestSource : std_logic := '0';
-
- -- TICK
-signal sTick1ms : std_logic_vector(31 downto 0):= (others => '0');
-
--- STEREO MULTIPLEX
-signal sSine19Khz : std_logic_vector(15 downto 0):= (others => '0');
-signal sSine38Khz : std_logic_vector(15 downto 0):= (others => '0');
-signal sMltSine : std_logic_vector(11 downto 0):= (others => '0');
-signal sMltChanel : std_logic_vector(0 downto 0):= (others => '0');
 
 begin
 
@@ -408,8 +450,9 @@ begin
 						sDDSphIncCtrl(15 downto 8) <= sMcuOutPort(7 downto 0);
 					when cDAC0_07_00Port =>
 						sDDSphIncCtrl(7 downto 0) <= sMcuOutPort(7 downto 0);
-					when cAudioSourcePort =>
-						sAudioTestSource <= sMcuOutPort(0);
+					when cRFModePort =>
+						sRFMode <= sMcuOutPort;
+					when cSystemResetPort =>
 					when others =>
 				end case;
 			end if;
@@ -541,22 +584,96 @@ begin
 				end if;
 			end if;
 		end process;
-		
+				-----------------------------------------------------------------------------
+		-----------------------------------------------------------------------------
+		--								 		AUDIO
+		-----------------------------------------------------------------------------
+		-----------------------------------------------------------------------------	
+
+	left_channel: adc_interface PORT MAP(
+		clk_i => sCLK4MHz,
+		reset_i => sCentralReset,
+		miso_i => ADC0_SDI,
+		mosi_o => open,
+		sclk_o => ADC0_SCLK,
+		ncs_o => ADC0_NCS,
+		data_o => sAudioL
+	);
+
+	right_channel: adc_interface PORT MAP(
+		clk_i => sCLK4MHz,
+		reset_i => sCentralReset,
+		miso_i => ADC1_SDI,
+		mosi_o => open,
+		sclk_o => ADC1_SCLK,
+		ncs_o => ADC1_NCS,
+		data_o => sAudioR
+	);
+	
+
+  
+   scale_cmajor : process(CLK_LFC, sAudioTestTonePhInc)
+	variable idx : integer range 0 to 7 := 0;
+	begin
+		if rising_edge(CLK_LFC) then
+			if idx = 0 then
+				idx := 7;
+			else
+				idx := idx - 1;
+			end if;
+			sAudioTestTonePhInc <= cTones(idx);
+		end if;
+	end process;
+	
+	tone_generator : DDS_LF
+	  PORT MAP (
+		clk => sCLK16MHz,
+		pinc_in => sAudioTestTonePhInc,
+		sine => sAudioTestToneSine
+	  );
 		-----------------------------------------------------------------------------
 		-----------------------------------------------------------------------------
 		--								 		DAC 0 
 		-----------------------------------------------------------------------------
-		-----------------------------------------------------------------------------	
-		
-		-- main DDS FM modulator
-		FM_Mono : DDS_RF
+		-----------------------------------------------------------------------------			
+		mono : DDS_RF
 	  PORT MAP (
 		 clk => sCLK120MHz,
-		 pinc_in => sDDSphInc,
-		 sine => DAC0_DATA
+		 pinc_in => sDDSMonophInc,
+		 sine => sDDSMono
 	  );
-		
-		
+
+		pilot : DDS_RF_2
+	  PORT MAP (
+		 clk => sCLK120MHz,
+		 pinc_in => sDDSPilotphInc,
+		 sine => sDDSPilot
+	  );
+  
+		stero : DDS_RF3
+	  PORT MAP (
+		 clk => sCLK120MHz,
+		 pinc_in => sDDSStereophInc,
+		 sine => sDDSStereo
+	  );
+	  
+	    stereo_sub : stereo_mplx
+	  PORT MAP (
+		 clk => sCLK16MHz,
+		 channel => sSineChannel,
+		 sine => sSinexxKhz
+	  );
+	  
+	  tone_demultiplex : process(sSineChannel, sSinexxKhz)
+	  begin
+			if (sSineChannel(0) = '0') then
+				sSine38KHz <= sSinexxKhz;
+			else
+				sSine19KHz <= sSinexxKhz;
+			end if;
+	  end process;
+	  
+				
 		-- XILINX primitive to buffer-out CLK bus signal
 		sNCLK120MHz <= not(sCLK120MHz);
 		DA0_CLK_O : ODDR2
@@ -574,84 +691,87 @@ begin
 		  R => sCentralReset,
 		  S =>'0'
 		);
-		
-		-----------------------------------------------------------------------------
-		-----------------------------------------------------------------------------
-		--								 		AUDIO
-		-----------------------------------------------------------------------------
-		-----------------------------------------------------------------------------	
-
-	left_channel: adc_interface PORT MAP(
-		clk_i => sCLK4MHz,
-		reset_i => sCentralReset,
-		miso_i => ADC0_SDI,
-		mosi_o => open,
-		sclk_o => ADC0_SCLK,
-		ncs_o => ADC0_NCS,
-		data_o => sAudioLeft
-	);
-
-	right_channel: adc_interface PORT MAP(
-		clk_i => sCLK4MHz,
-		reset_i => sCentralReset,
-		miso_i => ADC1_SDI,
-		mosi_o => open,
-		sclk_o => ADC1_SCLK,
-		ncs_o => ADC1_NCS,
-		data_o => sAudioRight
-	);
-	
-	sine : DDS_LF
-  PORT MAP (
-    clk => sCLK16MHz,
-	 pinc_in => sAudioTestPhInc,
-    sine => sAudioTestSine
-  );
-  
-  ---------------------------------------------------------------------
-  
-  stero_circuit : stereo_mplx
-  PORT MAP (
-    clk => sCLK16MHz,
-    channel => sMltChanel,
-    sine => sMltSine
-  );
-  
-  
-  multiplexer : process(sMltSine, sMltChanel)
-  begin 
-		if sMltChanel(0) = '0' then
-			sSine19Khz <= std_logic_vector(X"0000" + unsigned(sMltSine));
-		else -- sMltSine = cMltChannel38kHz
-			sSine38Khz <= std_logic_vector(X"0000" + unsigned(sMltSine));
-		end if;
-  end process;
-  ---------------------------------------------------------------------
-  
-   test_tones : process(CLK_LFC, sAudioTestPhInc)
-	variable idx : integer range 0 to 7 := 0;
-	begin
-		if rising_edge(CLK_LFC) then
-			if idx = 0 then
-				idx := 7;
-			else
-				idx := idx - 1;
-			end if;
-			sAudioTestPhInc <= cTones(idx);
-		end if;
-	end process;
-	
-	audio_source : process(sCLK16MHz, sDDSphIncCtrl, sAudioTestSource, sAudioRight, sAudioLeft, sAudioLeftplusRight, sAudioLeftminusRight)
-   begin
-		if sAudioTestSource = '0' then
-			sAudioLeftplusRight <= std_logic_vector(unsigned(sAudioRight) + unsigned(sAudioLeft));
-			sAudioLeftminusRight <= std_logic_vector(unsigned(sAudioLeft) - unsigned(sAudioRight));
+			
+	--TBD: check signed/unsigned signal sum operations (result correctness)
+	audio_source : process(sRFMode, sAudioR, sAudioL, sAudioLpR, sAudioLmR, sDDSphIncCtrl, sDDSMono, sDDSPilot, sDDSStereo)
+begin
+    case sRFMode is 
+		when cRFTestSine =>
+			RF_AMP <= cRFAmpStageOn;
+			sAudioLpR <= (others => '0');
+			sAudioLmR <= (others => '0');
 			sAudioSSBSC <= (others => '0');
-			sDDSphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + shift_left(unsigned(sAudioLeftplusRight), 3) + shift_left(unsigned(sAudioLeftplusRight), 1) + unsigned(cDAC0_30Hz_Offset) + unsigned(sSine19Khz));
-		else
-			sDDSphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + shift_left((unsigned(sAudioTestSine) + unsigned(sAudioTestSine)), 3) + shift_left((unsigned(sAudioTestSine) + unsigned(sAudioTestSine)), 1) + unsigned(cDAC0_30Hz_Offset) + unsigned(sSine19Khz));
-		end if;
-   end process;
+			sAudioMplx <= (others => '0');
+			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioTestToneSine) + unsigned(cDAC0_30Hz_Offset));
+			sDDSPilotphInc <= (others => '0');
+			sDDSStereophInc <= (others => '0');
+			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono));
+		when cRFTestSinePilot =>
+			RF_AMP <= cRFAmpStageOn;
+			sAudioLpR <= (others => '0');
+			sAudioLmR <= (others => '0');
+			sAudioSSBSC <= (others => '0');
+			sAudioMplx <= (others => '0');
+			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioTestToneSine) + unsigned(cDAC0_30Hz_Offset));
+			sDDSPilotphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sSine19KHz) + unsigned(c19kHz));
+			sDDSStereophInc <= (others => '0');
+			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono) + signed(sDDSPilot));
+		when cRFMono =>
+			RF_AMP <= cRFAmpStageOn;
+			sAudioLpR <= std_logic_vector(X"0000" + unsigned(sAudioR) + unsigned(sAudioL));
+			sAudioLmR <= (others => '0');
+			sAudioSSBSC <= (others => '0');
+			sAudioMplx <= (others => '0');
+			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioLpR) + unsigned(cDAC0_30Hz_Offset));
+			sDDSPilotphInc <= (others => '0');
+			sDDSStereophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(c38kHz) + signed(sAudioMplx) + signed(cDAC0_30Hz_Offset));
+			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono));
+		when cRFMonoPilot =>
+			RF_AMP <= cRFAmpStageOn;
+			sAudioLpR <= std_logic_vector(X"0000" + unsigned(sAudioR) + unsigned(sAudioL));
+			sAudioLmR <= (others => '0');
+			sAudioSSBSC <= (others => '0');
+			sAudioMplx <= (others => '0');
+			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioLpR) + unsigned(cDAC0_30Hz_Offset));
+			sDDSPilotphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sSine19KHz) + unsigned(c19kHz));
+			sDDSStereophInc <= (others => '0');
+			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono) + signed(sDDSPilot));
+		when cRFMonoStereo =>
+			RF_AMP <= cRFAmpStageOn;
+			sAudioLpR <= std_logic_vector(X"0000" + unsigned(sAudioR) + unsigned(sAudioL));
+			sAudioLmR <= std_logic_vector(X"0000" + unsigned(sAudioR) - unsigned(sAudioL));
+			sAudioSSBSC <= std_logic_vector(X"00000000" + signed(X"0000" + signed(sAudioLmR) - X"7FF")*signed(sSine38KHz));
+			sAudioMplx <= sAudioSSBSC(31 downto 19);
+			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioLpR) + unsigned(cDAC0_30Hz_Offset));
+			sDDSPilotphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sSine19KHz) + unsigned(c19kHz));
+			sDDSStereophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(c38kHz) + signed(sAudioMplx) + signed(cDAC0_30Hz_Offset));
+			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono) + signed(sDDSPilot) + signed(sDDSStereo));
+		when cRFMonoStereoPilot =>
+			RF_AMP <= cRFAmpStageOn;
+			sAudioLpR <= std_logic_vector(X"0000" + unsigned(sAudioR) + unsigned(sAudioL));
+			sAudioLmR <= std_logic_vector(X"0000" + unsigned(sAudioR) - unsigned(sAudioL));
+			sAudioSSBSC <= std_logic_vector(X"00000000" + signed(X"0000" + signed(sAudioLmR) - X"7FF")*signed(sSine38KHz));
+			sAudioMplx <= sAudioSSBSC(31 downto 19);
+			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioLpR) + unsigned(cDAC0_30Hz_Offset));
+			sDDSPilotphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sSine19KHz) + unsigned(c19kHz));
+			sDDSStereophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(c38kHz) + signed(sAudioMplx) + signed(cDAC0_30Hz_Offset));
+			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono) + signed(sDDSPilot) + signed(sDDSStereo));
+		when others =>
+			RF_AMP <= cRFAmpStageOff;
+			sAudioLpR <= (others => '0');
+			sAudioLmR <= (others => '0');
+			sAudioSSBSC <= (others => '0');
+			sAudioMplx <= (others => '0');
+			sDDSMonophInc <= (others => '0');
+			sDDSPilotphInc <= (others => '0');
+			sDDSStereophInc <= (others => '0');
+			sSumDDS <= (others => '0');
+	end case;
+	DAC0_DATA <= sSumDDS;
+end process;
+	
 
 end Behavioral;
+
+
 

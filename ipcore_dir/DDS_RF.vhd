@@ -44,7 +44,7 @@ ENTITY DDS_RF IS
   PORT (
     clk : IN STD_LOGIC;
     pinc_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
-    sine : OUT STD_LOGIC_VECTOR(9 DOWNTO 0)
+    sine : OUT STD_LOGIC_VECTOR(8 DOWNTO 0)
   );
 END DDS_RF;
 
@@ -54,7 +54,7 @@ COMPONENT wrapped_DDS_RF
   PORT (
     clk : IN STD_LOGIC;
     pinc_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
-    sine : OUT STD_LOGIC_VECTOR(9 DOWNTO 0)
+    sine : OUT STD_LOGIC_VECTOR(8 DOWNTO 0)
   );
 END COMPONENT;
 
@@ -78,9 +78,9 @@ END COMPONENT;
       c_negative_sine => 0,
       c_noise_shaping => 1,
       c_optimise_goal => 0,
-      c_output_width => 10,
+      c_output_width => 9,
       c_outputs_required => 0,
-      c_phase_angle_width => 8,
+      c_phase_angle_width => 7,
       c_phase_increment => 3,
       c_phase_increment_value => "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
       c_phase_offset => 0,

@@ -1,7 +1,7 @@
 ##############################################################
 #
-# Xilinx Core Generator version 14.5
-# Date: Fri Jan 07 10:53:18 2022
+# Xilinx Core Generator version 14.7
+# Date: Wed Feb  9 21:51:45 2022
 #
 ##############################################################
 #
@@ -74,7 +74,7 @@ CSET output_frequency7=0
 CSET output_frequency8=0
 CSET output_frequency9=0
 CSET output_selection=Sine
-CSET output_width=10
+CSET output_width=9
 CSET parameter_entry=Hardware_Parameters
 CSET partspresent=Phase_Generator_and_SIN_COS_LUT
 CSET period=1
@@ -139,4 +139,4 @@ CSET spurious_free_dynamic_range=36
 MISC pkg_timestamp=2012-08-28T14:48:35Z
 # END Extra information
 GENERATE
-# CRC: 4d6f99ed
+# CRC: 37264762

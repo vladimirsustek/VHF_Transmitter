@@ -55,7 +55,7 @@ ARCHITECTURE behavior OF tb_adc_interface IS
    --Inputs
    signal clk_i : std_logic := '0';
    signal reset_i : std_logic := '0';
-   signal miso_i : std_logic := '0';
+   signal miso_i : std_logic := '1';
 
  	--Outputs
    signal mosi_o : std_logic;
@@ -93,18 +93,7 @@ BEGIN
    stim_proc: process
    begin		
       -- hold reset state for 100 ns.
-      wait for clk_i_period*20;
-		miso_i <= '1';
-      wait for clk_i_period*15;
-		miso_i <= '0';
-      wait for clk_i_period*25;
-		miso_i <= '1';
-      wait for clk_i_period*13;
-		miso_i <= '0';
-		wait for clk_i_period*30;
-		miso_i <= '1';
-      wait for clk_i_period*10;
-		miso_i <= '0';
+		wait for clk_i_period;
       -- insert stimulus here 
 
       wait;

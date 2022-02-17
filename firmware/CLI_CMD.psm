@@ -1,3 +1,66 @@
+; CLI_CMD: Protocol controlled command dispatcher
+; Author: Vladimir Sustek, License: free for anything
+; Date: 09. Feb 2022, Platform KCPSM6 (PicoBlaze)
+;
+; The code uses specific KCPSM6 commands and therefore
+; may be unportable
+;
+; Purpose: Module is intended to read received string
+; content (e.g. UART) and upon the input determine the
+; action. Module is not calling any peripheral layer
+; therefore each action is processed by sending data 
+; to output port. Also, reading actions are directly 
+; accessing input port.
+;
+; Be careful when adding a new command to do not write
+; any register needed for command parsing/dispatching.
+;
+; Necessary dependencies: RAM_BUFF.psm
+;
+; Functions: 
+
+; 1) String functions for comparing input:
+
+; CMD_TCKGET, CMD_DA1STV, CMD_DA0STI, CMD_AUDSRC, SSYS_SRS
+; + CMD_DUMMY (dummy memory area ocuppied by the function)
+;
+; 2) Action functions (called upon the input request)
+;
+; RSP_DA1STV, RSP_DA0STI, RSP_AUDSRC, RSP_TCKGET, RSP_SYSRST, RSP_ERR
+;
+; 3) Interface function (only called by upper layer/application)
+; 
+; CHECK_RECEIVED
+;
+; 4) Internal operations
+;
+; COMPARE_CMD, GET_ARG, PRINT_ARG, ASCII2HEX
+;
+;
+; Protocol description:
+;-----------------------------------------
+; EACH input commands must have length of 15 characters:
+; 
+; - two characters of the peripheral name e.g. D1 (DAC1)
+; - underscore delimiter '_' = 0x5F
+; - two characters of the action name e.g. SI (Set Voltage)
+; - underscore delimiter '_' = 0x5F
+; - eight characters of the argument e.g. 00001111
+; - termination of the string by LF (Line Feed) = 0x0A 
+;
+; Supported commands:
+;
+; D1_SV_XXXX0123 -> applicable D1_SV_00009999 : D1_SV_00000000
+; set DAC1 voltage => 0.067mV * argument (max cca 3000mV)
+
+; D0_SI_X0123456 -> applicable D0_SI_01FFFFFF : D0_SI_00000000
+; set DAC0 frequency => 3.57Hz * argument (max 120MHz)
+
+; RF_MD_XXXXXXX1 -> applicable RF_MD_00000001 : RF_MD_00000005
+
+; TC_GT_XXXXXXXX -> no meaningful argument needed, just padding
+; get 32-bit tick value which is each 1ms incremented
+
 CONSTANT CMD_LNG, 06
 CONSTANT ARG_LNG, 08
 CONSTANT CMD_OK, 55
@@ -20,10 +83,17 @@ CONSTANT cDAC0_23_16Port, 07
 CONSTANT cDAC0_15_08Port, 06
 CONSTANT cDAC0_07_00Port, 05
 
-CONSTANT cAudioSourcePort, 09
-
+CONSTANT cRFModePort, 09
 CONSTANT cSystemResetPort, 0A
+CONSTANT cDDSModePort, 0B
 
+
+CONSTANT cRFTestSine, 01
+CONSTANT cRFTestSinePilot, 02
+CONSTANT cRFMono, 02
+CONSTANT cRFMonoPilot, 03
+CONSTANT cRFMonoStereo, 04
+CONSTANT cRFMonoStereoPilot, 05
 ;-----------------------------------------
 ; EACH commands needs always content of 15 characters:
 ; 
@@ -54,8 +124,8 @@ CMD_DA1STV: LOAD&RETURN s6, SDA1_STV$
 STRING SDA0_STI$, "D0_SI_"
 CMD_DA0STI: LOAD&RETURN s6, SDA0_STI$
 
-STRING SAUD_SRC$, "AU_SR_"
-CMD_AUDSRC: LOAD&RETURN s6, SAUD_SRC$
+STRING SRFS_MOD$, "RF_MD_"
+CMD_RFSMOD: LOAD&RETURN s6, SRFS_MOD$
 
 STRING SSYS_SRS$, "SY_RS_"
 CMD_SYSRST: LOAD&RETURN s6, SSYS_SRS$
@@ -103,15 +173,18 @@ RSP_DA0STI: CALL UART_TX_CLEAR
 			
 			RETURN
 			
-STRING SRAUD_VLM$, "AUD:S-set"
-RSP_AUDSRC: CALL UART_TX_CLEAR
-			OUTPUTK SRAUD_VLM$, 1
-		    OUTPUTK LF, 1
+STRING SRRFS_MOD$, "RFS:M-set"
+RSP_RFSMOD: CALL UART_TX_CLEAR
+
 			CALL READ_ARG_07_00
-			OUTPUT BUFF_DATA, cAudioSourcePort
+			OUTPUT BUFF_DATA, cRFModePort
+			
+			OUTPUTK SRRFS_MOD$, 1
+		    OUTPUTK LF, 1
+			
 			RETURN
 			
-STRING SRTCK_GET$, "TCK:"
+STRING SRTCK_GET$, "STCK:"
 RSP_TCKGET: CALL UART_TX_CLEAR
 
 			OUTPUTK SRTCK_GET$, 1
@@ -129,7 +202,7 @@ RSP_TCKGET: CALL UART_TX_CLEAR
 			
 			RETURN
 
-STRING SRRST_PRC$, "SYS_RESET:"
+STRING SRRST_PRC$, "SYST_RST:"
 RSP_SYSRST:	OUTPUTK SRRST_PRC$, 1
 			OUTPUTK LF, 1
 			LOAD s6, FF
@@ -138,11 +211,11 @@ RSP_SYSRST:	OUTPUTK SRRST_PRC$, 1
 			
 			
 
-STRING SERR$, "CmdArgEr!"
-RSP_ERR:    CALL UART_TX_CLEAR
-			OUTPUTK SERR$, 1
-		    OUTPUTK LF, 1
-			RETURN	
+STRING SGENERR$,   "CMDGENER!"
+RSP_GENERR:     	CALL UART_TX_CLEAR
+					OUTPUTK SGENERR$, 1
+					OUTPUTK LF, 1
+					RETURN	
 ;------------------------------------------
    
 ;--------------------------------------------------
@@ -174,20 +247,12 @@ CHECK_RECEIVED:	LOAD s9, BUFF_HEAD
 				
 				LOAD BUFF_HEAD, s9
 				
-				LOAD s3, CMD_AUDSRC'upper
-				LOAD s2, CMD_AUDSRC'lower
-				LOAD s1, RSP_AUDSRC'upper
-				LOAD s0, RSP_AUDSRC'lower
+				LOAD s3, CMD_RFSMOD'upper
+				LOAD s2, CMD_RFSMOD'lower
+				LOAD s1, RSP_RFSMOD'upper
+				LOAD s0, RSP_RFSMOD'lower
 				CALL COMPARE_CMD
-
-				LOAD BUFF_HEAD, s9
-				
-				LOAD s3, CMD_SYSRST'upper
-				LOAD s2, CMD_SYSRST'lower
-				LOAD s1, RSP_SYSRST'upper
-				LOAD s0, RSP_SYSRST'lower
-				CALL COMPARE_CMD
-				
+			
 				CALL INIT_BUFF
 				RETURN				
 			
@@ -210,9 +275,7 @@ endofstr:	  LOAD s4, BUFF_TAIL
 			  SUB s4, 01
 			  COMPARE s4, ARG_LNG ; LF as the last ?
 			  JUMP Z, match ; 1 or 0 returned in s0
-			  CALL RSP_ERR
-			  RETURN
-			  
+			  		  
 match:		  CALL GET_ARG  
 			  CALL@ (s1, s0)
 			  RETURN
@@ -235,7 +298,6 @@ iter32b:	  CALL READ_BUFF
 			  ADD s4, 01
 			  
 			  JUMP NC, iter32b
-			  CALL PRINT_ARG		  
 			  RETURN Z
 			  
 ASCII2HEX:    SUB BUFF_DATA, 30

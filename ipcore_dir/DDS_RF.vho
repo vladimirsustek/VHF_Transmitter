@@ -67,7 +67,7 @@ COMPONENT DDS_RF
   PORT (
     clk : IN STD_LOGIC;
     pinc_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
-    sine : OUT STD_LOGIC_VECTOR(9 DOWNTO 0)
+    sine : OUT STD_LOGIC_VECTOR(8 DOWNTO 0)
   );
 END COMPONENT;
 -- COMP_TAG_END ------ End COMPONENT Declaration ------------

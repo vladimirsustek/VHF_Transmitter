@@ -105,7 +105,7 @@ end process;
 				sigSPI_RST <= '0';
 				sigSPI_St <= CONVERSION;
 			elsif sigSPI_St = CONVERSION and sigSPI_Rdy = '1' and sEn44kHz = '1' then
-				sigSPI_Data_q <= std_logic_vector(shift_right(unsigned(sigSPI_Data_d),4));
+				sigSPI_Data_q <= std_logic_vector(shift_right(unsigned(sigSPI_Data_d), 1));
 				sigSPI_RST <= '1';
 				sigSPI_St <= RESET;
 			end if;
@@ -130,7 +130,7 @@ end process;
 		data_o => sigSPI_Data_d,
 		rdy_o => sigSPI_Rdy
 	);
-	data_o <= sigSPI_Data_q;
+	data_o <= std_logic_vector(X"0000" + unsigned(sigSPI_Data_q(10 downto 0)));
 
 end Behavioral;
 

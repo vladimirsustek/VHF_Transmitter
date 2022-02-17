@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <symbol version="7" name="stereo_mplx">
     <symboltype>BLOCK</symboltype>
-    <timestamp>2022-2-2T12:21:22</timestamp>
+    <timestamp>2022-2-15T22:46:32</timestamp>
     <pin polarity="Input" x="0" y="80" name="clk" />
     <pin polarity="Output" x="352" y="144" name="channel[0:0]" />
     <pin polarity="Output" x="352" y="176" name="sine[11:0]" />

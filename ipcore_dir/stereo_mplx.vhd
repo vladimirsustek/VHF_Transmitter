@@ -82,7 +82,7 @@ END COMPONENT;
       c_outputs_required => 0,
       c_phase_angle_width => 12,
       c_phase_increment => 2,
-      c_phase_increment_value => "10011100,100111000,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+      c_phase_increment_value => "100111000,10011100,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
       c_phase_offset => 0,
       c_phase_offset_value => "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
       c_por_mode => 0,
