@@ -12,6 +12,6 @@ PINATTR PinName channel[0:0]
 PINATTR Polarity OUT
 LINE Wide 352 176 320 176
 PIN 352 176 RIGHT 36
-PINATTR PinName sine[11:0]
+PINATTR PinName sine[10:0]
 PINATTR Polarity OUT
 

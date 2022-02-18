@@ -44,7 +44,7 @@ ENTITY stereo_mplx IS
   PORT (
     clk : IN STD_LOGIC;
     channel : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
+    sine : OUT STD_LOGIC_VECTOR(10 DOWNTO 0)
   );
 END stereo_mplx;
 
@@ -54,7 +54,7 @@ COMPONENT wrapped_stereo_mplx
   PORT (
     clk : IN STD_LOGIC;
     channel : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
+    sine : OUT STD_LOGIC_VECTOR(10 DOWNTO 0)
   );
 END COMPONENT;
 
@@ -78,9 +78,9 @@ END COMPONENT;
       c_negative_sine => 0,
       c_noise_shaping => 0,
       c_optimise_goal => 0,
-      c_output_width => 12,
+      c_output_width => 11,
       c_outputs_required => 0,
-      c_phase_angle_width => 12,
+      c_phase_angle_width => 11,
       c_phase_increment => 2,
       c_phase_increment_value => "100111000,10011100,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
       c_phase_offset => 0,

@@ -214,7 +214,7 @@ architecture Behavioral of top is
 		  PORT (
 			 clk : IN STD_LOGIC;
 			 channel : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-			 sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
+			 sine : OUT STD_LOGIC_VECTOR(10 DOWNTO 0)
 		  );
 	END COMPONENT;
 	
@@ -264,6 +264,7 @@ constant cDAC0_30Hz_Offset : std_logic_vector(15 downto 0):= X"0008";
 
 constant c38kHz : std_logic_vector(15 downto 0):= X"2981";
 constant c19kHz : std_logic_vector(15 downto 0):= X"14C0";
+constant c7k5Hz : std_logic_vector(15 downto 0):= X"0831";
 
 constant cRFTestSine : std_logic_vector(7 downto 0) := X"01";
 constant cRFTestSinePilot : std_logic_vector(7 downto 0) := X"02";
@@ -346,10 +347,11 @@ signal sAudioR : std_logic_vector(15 downto 0):= (others => '0');
 signal sAudioLmR : std_logic_vector(15 downto 0):= (others => '0');
 signal sAudioLpR : std_logic_vector(15 downto 0) := (others => '0');
 signal sAudioSSBSC : std_logic_vector(31 downto 0) := (others => '0');
+signal sAudioMplx32b : std_logic_vector(31 downto 0):= (others => '0');
 signal sAudioMplx : std_logic_vector(12 downto 0):= (others => '0');
-signal sSinexxKHz : std_logic_vector(11 downto 0):= (others => '0');
-signal sSine38KHz : std_logic_vector(11 downto 0):= (others => '0');
-signal sSine19KHz : std_logic_vector(11 downto 0):= (others => '0');
+signal sSinexxKHz : std_logic_vector(10 downto 0):= (others => '0');
+signal sSine38KHz : std_logic_vector(10 downto 0):= (others => '0');
+signal sSine19KHz : std_logic_vector(10 downto 0):= (others => '0');
 signal sSineChannel : std_logic_vector(0 downto 0):= (others => '0');
 signal sAudioTestToneSine : std_logic_vector(11 downto 0) := (others => '0');
 signal sAudioTestTonePhInc : std_logic_vector(23 downto 0) := (others => '0');
@@ -702,7 +704,7 @@ begin
 			sAudioLmR <= (others => '0');
 			sAudioSSBSC <= (others => '0');
 			sAudioMplx <= (others => '0');
-			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioTestToneSine) + unsigned(cDAC0_30Hz_Offset));
+			sDDSMonophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(cDAC0_30Hz_Offset) + (signed(sAudioTestToneSine) + signed(c7k5Hz)));
 			sDDSPilotphInc <= (others => '0');
 			sDDSStereophInc <= (others => '0');
 			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono));
@@ -712,49 +714,51 @@ begin
 			sAudioLmR <= (others => '0');
 			sAudioSSBSC <= (others => '0');
 			sAudioMplx <= (others => '0');
-			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioTestToneSine) + unsigned(cDAC0_30Hz_Offset));
-			sDDSPilotphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sSine19KHz) + unsigned(c19kHz));
+			sDDSMonophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(cDAC0_30Hz_Offset) + (signed(sAudioTestToneSine) + signed(c7k5Hz)));
+			sDDSPilotphInc <= std_logic_vector(signed(sDDSphIncCtrl) + (signed(sSine19KHz)) + signed(c19kHz));
 			sDDSStereophInc <= (others => '0');
 			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono) + signed(sDDSPilot));
 		when cRFMono =>
 			RF_AMP <= cRFAmpStageOn;
-			sAudioLpR <= std_logic_vector(X"0000" + unsigned(sAudioR) + unsigned(sAudioL));
+			sAudioLpR <= std_logic_vector(signed(X"0000" + unsigned(sAudioR) + unsigned(sAudioL)) - 2047);
 			sAudioLmR <= (others => '0');
 			sAudioSSBSC <= (others => '0');
 			sAudioMplx <= (others => '0');
-			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioLpR) + unsigned(cDAC0_30Hz_Offset));
+			sDDSMonophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(cDAC0_30Hz_Offset) + signed(sAudioLpR) + signed(c7k5Hz) );
 			sDDSPilotphInc <= (others => '0');
 			sDDSStereophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(c38kHz) + signed(sAudioMplx) + signed(cDAC0_30Hz_Offset));
 			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono));
 		when cRFMonoPilot =>
 			RF_AMP <= cRFAmpStageOn;
-			sAudioLpR <= std_logic_vector(X"0000" + unsigned(sAudioR) + unsigned(sAudioL));
+			sAudioLpR <= std_logic_vector(signed(X"0000" + unsigned(sAudioR) + unsigned(sAudioL)) - 2047);
 			sAudioLmR <= (others => '0');
 			sAudioSSBSC <= (others => '0');
 			sAudioMplx <= (others => '0');
-			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioLpR) + unsigned(cDAC0_30Hz_Offset));
-			sDDSPilotphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sSine19KHz) + unsigned(c19kHz));
+			sDDSMonophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(sAudioLpR) + signed(c7k5Hz) + signed(cDAC0_30Hz_Offset));
+			sDDSPilotphInc <= std_logic_vector(signed(sDDSphIncCtrl) + (signed(sSine19KHz)/4) + signed(c19kHz));			
 			sDDSStereophInc <= (others => '0');
 			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono) + signed(sDDSPilot));
 		when cRFMonoStereo =>
 			RF_AMP <= cRFAmpStageOn;
-			sAudioLpR <= std_logic_vector(X"0000" + unsigned(sAudioR) + unsigned(sAudioL));
+			sAudioLpR <= std_logic_vector(signed(X"0000" + unsigned(sAudioR) + unsigned(sAudioL)) - 2047);
 			sAudioLmR <= std_logic_vector(X"0000" + unsigned(sAudioR) - unsigned(sAudioL));
-			sAudioSSBSC <= std_logic_vector(X"00000000" + signed(X"0000" + signed(sAudioLmR) - X"7FF")*signed(sSine38KHz));
-			sAudioMplx <= sAudioSSBSC(31 downto 19);
-			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioLpR) + unsigned(cDAC0_30Hz_Offset));
-			sDDSPilotphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sSine19KHz) + unsigned(c19kHz));
-			sDDSStereophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(c38kHz) + signed(sAudioMplx) + signed(cDAC0_30Hz_Offset));
-			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono) + signed(sDDSPilot) + signed(sDDSStereo));
+			sAudioSSBSC <= std_logic_vector(X"00000000" + signed(X"0000" + signed(sAudioLmR))*signed(shift_right(signed(sSine38KHz),1)));
+			sAudioMplx32b <= std_logic_vector((signed(sAudioSSBSC)/256));
+			sAudioMplx <= sAudioMplx32b(12 downto 0);
+			sDDSMonophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(cDAC0_30Hz_Offset) + signed(c7k5Hz) + signed(sAudioLpR));
+			sDDSPilotphInc <= (others => '0');
+			sDDSStereophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(c38kHz) + signed(sAudioMplx));
+			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono) + signed(sDDSStereo));
 		when cRFMonoStereoPilot =>
 			RF_AMP <= cRFAmpStageOn;
-			sAudioLpR <= std_logic_vector(X"0000" + unsigned(sAudioR) + unsigned(sAudioL));
+			sAudioLpR <= std_logic_vector(signed(X"0000" + unsigned(sAudioR) + unsigned(sAudioL)) - 2047);
 			sAudioLmR <= std_logic_vector(X"0000" + unsigned(sAudioR) - unsigned(sAudioL));
-			sAudioSSBSC <= std_logic_vector(X"00000000" + signed(X"0000" + signed(sAudioLmR) - X"7FF")*signed(sSine38KHz));
-			sAudioMplx <= sAudioSSBSC(31 downto 19);
-			sDDSMonophInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sAudioLpR) + unsigned(cDAC0_30Hz_Offset));
-			sDDSPilotphInc <= std_logic_vector(unsigned(sDDSphIncCtrl) + unsigned(sSine19KHz) + unsigned(c19kHz));
-			sDDSStereophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(c38kHz) + signed(sAudioMplx) + signed(cDAC0_30Hz_Offset));
+			sAudioSSBSC <= std_logic_vector(X"00000000" + signed(X"0000" + signed(sAudioLmR))*signed(shift_right(signed(sSine38KHz),1)));
+			sAudioMplx32b <= std_logic_vector((signed(sAudioSSBSC)/256));
+			sAudioMplx <= sAudioMplx32b(12 downto 0);
+			sDDSMonophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(cDAC0_30Hz_Offset) + signed(c7k5Hz) + signed(sAudioLpR));
+			sDDSPilotphInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(c19kHz) + (signed(sSine19KHz)));
+			sDDSStereophInc <= std_logic_vector(signed(sDDSphIncCtrl) + signed(c38kHz) + signed(sAudioMplx));
 			sSumDDS <= std_logic_vector("0000000000" + signed(sDDSMono) + signed(sDDSPilot) + signed(sDDSStereo));
 		when others =>
 			RF_AMP <= cRFAmpStageOff;

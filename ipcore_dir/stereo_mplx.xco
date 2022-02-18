@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 14.7
-# Date: Tue Feb 15 22:45:02 2022
+# Date: Fri Feb 18 19:38:23 2022
 #
 ##############################################################
 #
@@ -50,7 +50,7 @@ CSET explicit_period=false
 CSET frequency_resolution=0.4
 CSET gui_behaviour=Coregen
 CSET has_phase_out=false
-CSET latency=7
+CSET latency=4
 CSET latency_configuration=Auto
 CSET memory_type=Auto
 CSET negative_cosine=false
@@ -74,7 +74,7 @@ CSET output_frequency7=0
 CSET output_frequency8=0
 CSET output_frequency9=0
 CSET output_selection=Sine
-CSET output_width=12
+CSET output_width=11
 CSET parameter_entry=Hardware_Parameters
 CSET partspresent=Phase_Generator_and_SIN_COS_LUT
 CSET period=1
@@ -139,4 +139,4 @@ CSET spurious_free_dynamic_range=36
 MISC pkg_timestamp=2012-08-28T14:48:35Z
 # END Extra information
 GENERATE
-# CRC: 70b8af1b
+# CRC: d552acb8

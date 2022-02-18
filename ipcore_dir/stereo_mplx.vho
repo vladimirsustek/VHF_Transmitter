@@ -67,7 +67,7 @@ COMPONENT stereo_mplx
   PORT (
     clk : IN STD_LOGIC;
     channel : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    sine : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
+    sine : OUT STD_LOGIC_VECTOR(10 DOWNTO 0)
   );
 END COMPONENT;
 -- COMP_TAG_END ------ End COMPONENT Declaration ------------

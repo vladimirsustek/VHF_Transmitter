@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <symbol version="7" name="stereo_mplx">
     <symboltype>BLOCK</symboltype>
-    <timestamp>2022-2-15T22:46:32</timestamp>
+    <timestamp>2022-2-18T19:39:44</timestamp>
     <pin polarity="Input" x="0" y="80" name="clk" />
     <pin polarity="Output" x="352" y="144" name="channel[0:0]" />
-    <pin polarity="Output" x="352" y="176" name="sine[11:0]" />
+    <pin polarity="Output" x="352" y="176" name="sine[10:0]" />
     <graph>
         <text style="fontsize:40;fontname:Arial" x="32" y="32">stereo_mplx</text>
         <rect width="288" x="32" y="32" height="384" />
@@ -13,6 +13,6 @@
         <line x2="320" y1="144" y2="144" style="linewidth:W" x1="352" />
         <attrtext style="alignment:RIGHT;fontsize:24;fontname:Arial" attrname="PinName" x="316" y="144" type="pin channel[0:0]" />
         <line x2="320" y1="176" y2="176" style="linewidth:W" x1="352" />
-        <attrtext style="alignment:RIGHT;fontsize:24;fontname:Arial" attrname="PinName" x="316" y="176" type="pin sine[11:0]" />
+        <attrtext style="alignment:RIGHT;fontsize:24;fontname:Arial" attrname="PinName" x="316" y="176" type="pin sine[10:0]" />
     </graph>
 </symbol>
