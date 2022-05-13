@@ -62,6 +62,11 @@ entity top is
 				ADC1_SDI : in std_logic;
 				ADC1_NCS : out std_logic;
 				
+				LCD_RS : out std_logic;
+				LCD_RW : out std_logic;
+				LCD_E : out std_logic;
+				LCD_DB : inout std_logic_vector(3 downto 0);
+
 				RF_AMP : out std_logic;
 				DAC0_DATA : out std_logic_vector(9 downto 0);
 				DAC0_CLK : out std_logic);
@@ -93,7 +98,49 @@ architecture Behavioral of top is
 		  CLK_OUT3          : out    std_logic
 		 );
 	end component;
-
+	
+	COMPONENT lcd_driver
+	PORT(
+		clk : IN std_logic;
+		line1_00 : IN std_logic_vector(7 downto 0);
+		line1_01 : IN std_logic_vector(7 downto 0);
+		line1_02 : IN std_logic_vector(7 downto 0);
+		line1_03 : IN std_logic_vector(7 downto 0);
+		line1_04 : IN std_logic_vector(7 downto 0);
+		line1_05 : IN std_logic_vector(7 downto 0);
+		line1_06 : IN std_logic_vector(7 downto 0);
+		line1_07 : IN std_logic_vector(7 downto 0);
+		line1_08 : IN std_logic_vector(7 downto 0);
+		line1_09 : IN std_logic_vector(7 downto 0);
+		line1_10 : IN std_logic_vector(7 downto 0);
+		line1_11 : IN std_logic_vector(7 downto 0);
+		line1_12 : IN std_logic_vector(7 downto 0);
+		line1_13 : IN std_logic_vector(7 downto 0);
+		line1_14 : IN std_logic_vector(7 downto 0);
+		line1_15 : IN std_logic_vector(7 downto 0);
+		line2_00 : IN std_logic_vector(7 downto 0);
+		line2_01 : IN std_logic_vector(7 downto 0);
+		line2_02 : IN std_logic_vector(7 downto 0);
+		line2_03 : IN std_logic_vector(7 downto 0);
+		line2_04 : IN std_logic_vector(7 downto 0);
+		line2_05 : IN std_logic_vector(7 downto 0);
+		line2_06 : IN std_logic_vector(7 downto 0);
+		line2_07 : IN std_logic_vector(7 downto 0);
+		line2_08 : IN std_logic_vector(7 downto 0);
+		line2_09 : IN std_logic_vector(7 downto 0);
+		line2_10 : IN std_logic_vector(7 downto 0);
+		line2_11 : IN std_logic_vector(7 downto 0);
+		line2_12 : IN std_logic_vector(7 downto 0);
+		line2_13 : IN std_logic_vector(7 downto 0);
+		line2_14 : IN std_logic_vector(7 downto 0);
+		line2_15 : IN std_logic_vector(7 downto 0);    
+		lcd_db : INOUT std_logic_vector(7 downto 4);      
+		lcd_e : OUT std_logic;
+		lcd_rs : OUT std_logic;
+		lcd_rw : OUT std_logic
+		);
+	END COMPONENT;
+	
   component kcpsm6
   generic(                 hwbuild : std_logic_vector(7 downto 0) := X"00";
                   interrupt_vector : std_logic_vector(11 downto 0) := X"3FF";
@@ -257,6 +304,40 @@ constant cDAC0_31_24Port : std_logic_vector(7 downto 0) := X"08";
 
 constant cRFModePort : std_logic_vector(7 downto 0) := X"09";
 constant cSystemResetPort : std_logic_vector(7 downto 0) := X"0A";
+
+constant cLCDPort1_00 : std_logic_vector(7 downto 0) := X"10";
+constant cLCDPort1_01 : std_logic_vector(7 downto 0) := X"11";
+constant cLCDPort1_02 : std_logic_vector(7 downto 0) := X"12";
+constant cLCDPort1_03 : std_logic_vector(7 downto 0) := X"13";
+constant cLCDPort1_04 : std_logic_vector(7 downto 0) := X"14";
+constant cLCDPort1_05 : std_logic_vector(7 downto 0) := X"15";
+constant cLCDPort1_06 : std_logic_vector(7 downto 0) := X"16";
+constant cLCDPort1_07 : std_logic_vector(7 downto 0) := X"17";
+constant cLCDPort1_08 : std_logic_vector(7 downto 0) := X"18";
+constant cLCDPort1_09 : std_logic_vector(7 downto 0) := X"19";
+constant cLCDPort1_10 : std_logic_vector(7 downto 0) := X"1A";
+constant cLCDPort1_11 : std_logic_vector(7 downto 0) := X"1B";
+constant cLCDPort1_12 : std_logic_vector(7 downto 0) := X"1C";
+constant cLCDPort1_13 : std_logic_vector(7 downto 0) := X"1D";
+constant cLCDPort1_14 : std_logic_vector(7 downto 0) := X"1E";
+constant cLCDPort1_15 : std_logic_vector(7 downto 0) := X"1F";
+
+constant cLCDPort2_00 : std_logic_vector(7 downto 0) := X"20";
+constant cLCDPort2_01 : std_logic_vector(7 downto 0) := X"21";
+constant cLCDPort2_02 : std_logic_vector(7 downto 0) := X"22";
+constant cLCDPort2_03 : std_logic_vector(7 downto 0) := X"23";
+constant cLCDPort2_04 : std_logic_vector(7 downto 0) := X"24";
+constant cLCDPort2_05 : std_logic_vector(7 downto 0) := X"25";
+constant cLCDPort2_06 : std_logic_vector(7 downto 0) := X"26";
+constant cLCDPort2_07 : std_logic_vector(7 downto 0) := X"27";
+constant cLCDPort2_08 : std_logic_vector(7 downto 0) := X"28";
+constant cLCDPort2_09 : std_logic_vector(7 downto 0) := X"29";
+constant cLCDPort2_10 : std_logic_vector(7 downto 0) := X"2A";
+constant cLCDPort2_11 : std_logic_vector(7 downto 0) := X"2B";
+constant cLCDPort2_12 : std_logic_vector(7 downto 0) := X"2C";
+constant cLCDPort2_13 : std_logic_vector(7 downto 0) := X"2D";
+constant cLCDPort2_14 : std_logic_vector(7 downto 0) := X"2E";
+constant cLCDPort2_15 : std_logic_vector(7 downto 0) := X"2F";
 ----------------------------------------------------------------
 
 constant cDAC0_21_1MHz_phInc : std_logic_vector(24 downto 0) := "0010110100000011010110101";
@@ -356,6 +437,40 @@ signal sSineChannel : std_logic_vector(0 downto 0):= (others => '0');
 signal sAudioTestToneSine : std_logic_vector(11 downto 0) := (others => '0');
 signal sAudioTestTonePhInc : std_logic_vector(23 downto 0) := (others => '0');
 
+-- LCD
+
+signal sLCDLine1_00 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_01 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_02 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_03 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_04 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_05 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_06 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_07 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_08 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_09 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_10 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_11 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_12 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_13 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_14 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine1_15 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_00 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_01 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_02 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_03 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_04 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_05 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_06 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_07 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_08 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_09 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_10 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_11 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_12 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_13 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_14 : std_logic_vector(7 downto 0) := x"00";
+signal sLCDLine2_15 : std_logic_vector(7 downto 0) := x"00";
 
 begin
 
@@ -415,6 +530,45 @@ begin
 		reset => sMcuReset,
 		clk => sCLK16MHz);
 		
+		lcd: lcd_driver PORT MAP(
+		clk => sCLK4MHz,
+		lcd_e => LCD_E,
+		lcd_rs => LCD_RS,
+		lcd_rw => LCD_RW,
+		lcd_db => LCD_DB,
+		line1_00 => sLCDLine1_00,
+		line1_01 => sLCDLine1_01,
+		line1_02 => sLCDLine1_02,
+		line1_03 => sLCDLine1_03,
+		line1_04 => sLCDLine1_04,
+		line1_05 => sLCDLine1_05,
+		line1_06 => sLCDLine1_06,
+		line1_07 => sLCDLine1_07,
+		line1_08 => sLCDLine1_08,
+		line1_09 => sLCDLine1_09,
+		line1_10 => sLCDLine1_10,
+		line1_11 => sLCDLine1_11,
+		line1_12 => sLCDLine1_12,
+		line1_13 => sLCDLine1_13,
+		line1_14 => sLCDLine1_14,
+		line1_15 => sLCDLine1_15,
+		line2_00 => sLCDLine2_00,
+		line2_01 => sLCDLine2_01,
+		line2_02 => sLCDLine2_02,
+		line2_03 => sLCDLine2_03,
+		line2_04 => sLCDLine2_04,
+		line2_05 => sLCDLine2_05,
+		line2_06 => sLCDLine2_06,
+		line2_07 => sLCDLine2_07,
+		line2_08 => sLCDLine2_08,
+		line2_09 => sLCDLine2_09,
+		line2_10 => sLCDLine2_10,
+		line2_11 => sLCDLine2_11,
+		line2_12 => sLCDLine2_12,
+		line2_13 => sLCDLine2_13,
+		line2_14 => sLCDLine2_14,
+		line2_15 => sLCDLine2_15
+	);
 	-----------------------------------------------------------------------------
 	-- 								 OUT/IN HANDLING
 	-----------------------------------------------------------------------------							  
@@ -454,7 +608,70 @@ begin
 						sDDSphIncCtrl(7 downto 0) <= sMcuOutPort(7 downto 0);
 					when cRFModePort =>
 						sRFMode <= sMcuOutPort;
-					when cSystemResetPort =>
+					when cLCDPort1_00 =>
+						sLCDLine1_00 <= sMcuOutPort;
+					when cLCDPort1_01 =>
+						sLCDLine1_01 <= sMcuOutPort;
+					when cLCDPort1_02 =>
+						sLCDLine1_02 <= sMcuOutPort;
+					when cLCDPort1_03 =>
+						sLCDLine1_03 <= sMcuOutPort;
+					when cLCDPort1_04 =>
+						sLCDLine1_04 <= sMcuOutPort;
+					when cLCDPort1_05 =>
+						sLCDLine1_05 <= sMcuOutPort;
+					when cLCDPort1_06 =>
+						sLCDLine1_06 <= sMcuOutPort;
+					when cLCDPort1_07 =>
+						sLCDLine1_07 <= sMcuOutPort;
+					when cLCDPort1_08 =>
+						sLCDLine1_08 <= sMcuOutPort;
+					when cLCDPort1_09 =>
+						sLCDLine1_09 <= sMcuOutPort;
+					when cLCDPort1_10 =>
+						sLCDLine1_10 <= sMcuOutPort;
+					when cLCDPort1_11 =>
+						sLCDLine1_11 <= sMcuOutPort;
+					when cLCDPort1_12 =>
+						sLCDLine1_12 <= sMcuOutPort;
+					when cLCDPort1_13 =>
+						sLCDLine1_13 <= sMcuOutPort;
+					when cLCDPort1_14 =>
+						sLCDLine1_14 <= sMcuOutPort;
+					when cLCDPort1_15 =>
+						sLCDLine1_15 <= sMcuOutPort;
+					when cLCDPort2_00 =>
+						sLCDLine2_00 <= sMcuOutPort;
+					when cLCDPort2_01 =>
+						sLCDLine2_01 <= sMcuOutPort;
+					when cLCDPort2_02 =>
+						sLCDLine2_02 <= sMcuOutPort;
+					when cLCDPort2_03 =>
+						sLCDLine2_03 <= sMcuOutPort;
+					when cLCDPort2_04 =>
+						sLCDLine2_04 <= sMcuOutPort;
+					when cLCDPort2_05 =>
+						sLCDLine2_05 <= sMcuOutPort;
+					when cLCDPort2_06 =>
+						sLCDLine2_06 <= sMcuOutPort;
+					when cLCDPort2_07 =>
+						sLCDLine2_07 <= sMcuOutPort;
+					when cLCDPort2_08 =>
+						sLCDLine2_08 <= sMcuOutPort;
+					when cLCDPort2_09 =>
+						sLCDLine2_09 <= sMcuOutPort;
+					when cLCDPort2_10 =>
+						sLCDLine2_10 <= sMcuOutPort;
+					when cLCDPort2_11 =>
+						sLCDLine2_11 <= sMcuOutPort;
+					when cLCDPort2_12 =>
+						sLCDLine2_12 <= sMcuOutPort;
+					when cLCDPort2_13 =>
+						sLCDLine2_13 <= sMcuOutPort;
+					when cLCDPort2_14 =>
+						sLCDLine2_14 <= sMcuOutPort;
+					when cLCDPort2_15 =>
+						sLCDLine2_15 <= sMcuOutPort;
 					when others =>
 				end case;
 			end if;
