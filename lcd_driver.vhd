@@ -8,6 +8,7 @@ use IEEE.NUMERIC_STD.ALL;
 ENTITY lcd_driver IS
   PORT(
     clk             : IN    STD_LOGIC;
+	 rst_i			  : IN	 STD_LOGIC;
     lcd_e           : OUT   STD_LOGIC;
     lcd_rs          : OUT   STD_LOGIC;
     lcd_rw          : OUT   STD_LOGIC;
@@ -77,12 +78,17 @@ ARCHITECTURE OpenCores OF lcd_driver IS
 BEGIN
 --------------------------------------------------------------------------------
 
-  reset: PROCESS(clk) BEGIN
+  reset: PROCESS(clk, rst_i) BEGIN
     IF rising_edge(clk) THEN
-      IF cnt_rst(cnt_rst'HIGH) = '0' THEN
+      IF cnt_rst(cnt_rst'HIGH) = '0' and rst_i = '0' THEN
         cnt_rst <= cnt_rst + 1;
       END IF;
-      rst <= NOT cnt_rst(cnt_rst'HIGH);
+		if rst_i = '1' then
+			rst <= '1';
+			cnt_rst <= (others => '0');
+		else
+			rst <= NOT cnt_rst(cnt_rst'HIGH);
+		end if;
     END IF;
   END PROCESS reset;
 
