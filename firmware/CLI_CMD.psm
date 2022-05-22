@@ -21,12 +21,12 @@
 
 ; 1) String functions for comparing input:
 
-; CMD_TCKGET, CMD_DA1STV, CMD_DA0STI, CMD_AUDSRC, SSYS_SRS
+; CMD_TCKGET, CMD_DA1STV, CMD_DA0STI, CMD_RFSMOD, CMD_LCDSTB
 ; + CMD_DUMMY (dummy memory area ocuppied by the function)
 ;
 ; 2) Action functions (called upon the input request)
 ;
-; RSP_DA1STV, RSP_DA0STI, RSP_AUDSRC, RSP_TCKGET, RSP_SYSRST, RSP_ERR
+; RSP_DA1STV, RSP_DA0STI, RSP_RFSMOD, RSP_TCKGET, RSP_LCDSTB, RSP_ERR
 ;
 ; 3) Interface function (only called by upper layer/application)
 ; 
@@ -57,7 +57,12 @@
 ; set DAC0 frequency => 3.57Hz * argument (max 120MHz)
 
 ; RF_MD_XXXXXXX1 -> applicable RF_MD_00000001 : RF_MD_00000005
-
+;
+; LC_SB_XXXX2021 -> applicable RF_MD_000010?? : RF_MD_00002F??
+; used to control initialized 16x2 display FDCC1602N-FLYYBW-91LE
+; by setting ASCII character "??" into position 10 (1st line 0th 
+; char) up to position 20 (second line 15th character)
+;
 ; TC_GT_XXXXXXXX -> no meaningful argument needed, just padding
 ; get 32-bit tick value which is each 1ms incremented
 ;
@@ -137,7 +142,13 @@ CONSTANT cCORRECT_COMMAND, 55
 ; Awaited response: STCK:AABBCCDD<LF> 
 ; !!! note that response payload has length of 4-bytes - hex, not 8-bytes !!!
 ;
-
+; LC_SB_XXXX2020 -> applicable RF_MD_0000XXYY : AU_SR_0000XXYY where YY is ASCII
+; 
+; XX stands for position: LINE(1 or 2) and CHARACTER (0-F) and YY FOR ASCII character
+;
+; Awaited response LC_DB:XXYYY<LF>
+; 
+; 
 ; Fuctions headers to be checked against received content
 STRING STCK_GET$, "TC_GT_"
 CMD_TCKGET: LOAD&RETURN s6, STCK_GET$
@@ -154,8 +165,6 @@ CMD_RFSMOD: LOAD&RETURN s6, SRFS_MOD$
 STRING SLCD_STB$, "LC_SB_"
 CMD_LCDSTB: LOAD&RETURN s6, SLCD_STB$
 
-STRING SLCD_STN$, "LC_SN_"
-CMD_LCDSTN: LOAD&RETURN s6, SLCD_STN$
 
 ; This function is not intended to be called
 ; neither anyhow used, but by placing this 

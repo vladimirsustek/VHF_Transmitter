@@ -341,13 +341,16 @@ constant cLCDPort2_14 : std_logic_vector(7 downto 0) := X"2E";
 constant cLCDPort2_15 : std_logic_vector(7 downto 0) := X"2F";
 ----------------------------------------------------------------
 
+-- phase increment 21.00MHz synthetized by 3.57xx Hz delta_f DDS - unused = Dec 5,899,957 
 constant cDAC0_21_1MHz_phInc : std_logic_vector(24 downto 0) := "0010110100000011010110101";
 constant cDAC0_30Hz_Offset : std_logic_vector(15 downto 0):= X"0008";
 
+-- constant based on 3.57xx Hz phase increment to fullfill FM broadcast products
 constant c38kHz : std_logic_vector(15 downto 0):= X"2981";
 constant c19kHz : std_logic_vector(15 downto 0):= X"14C0";
 constant c7k5Hz : std_logic_vector(15 downto 0):= X"0831";
 
+-- enum constants for FSM of the system (RF mode)
 constant cRFTestSine : std_logic_vector(7 downto 0) := X"01";
 constant cRFTestSinePilot : std_logic_vector(7 downto 0) := X"02";
 constant cRFMono : std_logic_vector(7 downto 0) := X"03";
@@ -355,6 +358,7 @@ constant cRFMonoPilot : std_logic_vector(7 downto 0) := X"04";
 constant cRFMonoStereo : std_logic_vector(7 downto 0) := X"05";
 constant cRFMonoStereoPilot : std_logic_vector(7 downto 0) := X"06";
 
+-- enum constants to Turn On/Off RF stage relay
 constant cRFAmpStageOn : std_logic := '1';
 constant cRFAmpStageOff : std_logic := '0';
 	-----------------------------------------------------------------------------
@@ -416,6 +420,7 @@ signal sDDSPilotphInc : std_logic_vector(24 downto 0) := (others => '0');
 signal sDDSStereophInc : std_logic_vector(24 downto 0) := (others => '0');
 signal sDDSRDSphInc : std_logic_vector(24 downto 0) := (others => '0');
 --signal sDDSphIncCtrl : std_logic_vector(24 downto 0) := cDAC0_21_1MHz_phInc;
+-- sDDSphIncCtrl is being set by an MCU during the MCU start up (or reset)
 signal sDDSphIncCtrl : std_logic_vector(24 downto 0) := (others => '0');
 signal sDDSMono : std_logic_vector(8 downto 0) := (others => '0');
 signal sDDSPilot : std_logic_vector(5 downto 0) := (others => '0');
@@ -480,9 +485,12 @@ begin
 	--								CENTRAL COMBINATIONAL LOGIC
 	-----------------------------------------------------------------------------
 	-----------------------------------------------------------------------------
-
+	
+	-- sCentralReset is initiated when both buttons are pressed 
+	
 	sCentralReset <= '1' when (BTNS = "11") else '0';
 	
+	-- MCU reset process to allow either sCentralReset or sROMResetDuringLoad (MCU flashing)
 	MCU_Reset : process(sCentralReset, sROMResetDuringLoad)
 	begin
 		if sCentralReset = '1' then
@@ -576,6 +584,7 @@ begin
 	-----------------------------------------------------------------------------							  
 	output_ports : process(sCLK16MHz, sMcuPortId, sMcuOutPort, sMcuKwriteStrobe, sMcuwriteStrobe)
 	begin
+	   -- reset of all MCU controlled signals, once the sCentralReset and thus MCU is reset
 		if sCentralReset = '1' then
 			sTxUARTreset <= '0';
 			sRxUARTreset <= '0';
@@ -618,7 +627,7 @@ begin
 			sLCDLine2_14 <= X"20";
 			sLCDLine2_15 <= X"20";
 		elsif rising_edge(sCLK16MHz) then
-		---------------------------------
+		--------------------------------- Constant optimized ports OUTPUTK
 		   if sMcuKwriteStrobe = '1' then
 				case sMcuPortId(3 downto 0) is 
 					when cUARTRstPort =>
@@ -629,7 +638,7 @@ begin
 					when others =>
 				end case;
 			end if;
-			--------------------------------
+			-------------------------------- LOAD and OUTPUT ports
 			if sMcuWriteStrobe = '1' then
 				case sMcuPortId is
 					when cLEDPort => 
@@ -719,6 +728,7 @@ begin
 				end case;
 			end if;
 			--------------------------------
+			-- Buffering 16-byte UART peripheral 
 			if (sMcuWriteStrobe = '1' and sMcuPortId = cTxUARTDataPort) then
 				sTxUARTWrite <= '1';
 			elsif (sMcuKwriteStrobe = '1' and sMcuPortId(0) = '1') then
@@ -726,6 +736,8 @@ begin
 			else
 				sTxUARTWrite <= '0';
 			end if;
+			-- Reset of the sDAC1WritePortReq flag, which is being set when the second half of the 
+			-- sDAC1BufferedValue is set. The sDAC1WritePortAck is controlled by process buffer16bvalue
 			if sDAC1WritePortAck = '1' then
 				sDAC1WritePortReq <= '0';
 			end if;
@@ -835,6 +847,10 @@ begin
 		ncs_o => DAC1_NCS,
 		nldac_o => DAC1_NLDAC );
 		
+		
+		-- Process senses sDAC1WritePortReq and once both bytes of sDAC1BufferedValue
+		-- were received (the second one), prepares complete 16-bit value sDAC1ReadyValue
+		-- for 16-bit DAC1 and resets the sDAC1WritePortAck.
 		buffer16bvalue : process(sCLK16MHz, sDAC1BufferedValue, sDAC1WritePortReq)
 		begin
 			if sCentralReset = '1' then
