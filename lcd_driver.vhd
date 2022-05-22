@@ -92,6 +92,15 @@ BEGIN
     END IF;
   END PROCESS reset;
 
+--  reset: PROCESS(clk) BEGIN
+--    IF rising_edge(clk) THEN
+--      IF cnt_rst(cnt_rst'HIGH) = '0' THEN
+--        cnt_rst <= cnt_rst + 1;
+--      END IF;
+--		rst <= NOT cnt_rst(cnt_rst'HIGH);
+--    END IF;
+--  END PROCESS reset;
+  
   ------------------------------------------------------------------------------
 
   lcd16x2_ctrl_i : lcd16x2_ctrl

@@ -576,8 +576,49 @@ begin
 	-----------------------------------------------------------------------------							  
 	output_ports : process(sCLK16MHz, sMcuPortId, sMcuOutPort, sMcuKwriteStrobe, sMcuwriteStrobe)
 	begin
-		if rising_edge(sCLK16MHz) then
-		----------------------------------
+		if sCentralReset = '1' then
+			sTxUARTreset <= '0';
+			sRxUARTreset <= '0';
+			sTxUARTdata <= (others => '0');
+			LEDS <= (others => '0');
+			sDAC1BufferedValue <= (others => '0');
+			sDAC1WritePortReq <= '0';
+			sDDSphIncCtrl <= (others => '0');
+			sRFMode <= (others => '0');
+			sLCDLine1_00 <= X"20";
+			sLCDLine1_01 <= X"20";
+			sLCDLine1_02 <= X"20";
+			sLCDLine1_03 <= X"20";
+			sLCDLine1_04 <= X"20";
+			sLCDLine1_05 <= X"20";
+			sLCDLine1_06 <= X"20";
+			sLCDLine1_07 <= X"20";
+			sLCDLine1_08 <= X"20";
+			sLCDLine1_09 <= X"20";
+			sLCDLine1_10 <= X"20";
+			sLCDLine1_11 <= X"20";
+			sLCDLine1_12 <= X"20";
+			sLCDLine1_13 <= X"20";
+			sLCDLine1_14 <= X"20";
+			sLCDLine1_15 <= X"20";
+			sLCDLine2_00 <= X"20";
+			sLCDLine2_01 <= X"20";
+			sLCDLine2_02 <= X"20";
+			sLCDLine2_03 <= X"20";
+			sLCDLine2_04 <= X"20";
+			sLCDLine2_05 <= X"20";
+			sLCDLine2_06 <= X"20";
+			sLCDLine2_07 <= X"20";
+			sLCDLine2_08 <= X"20";
+			sLCDLine2_09 <= X"20";
+			sLCDLine2_10 <= X"20";
+			sLCDLine2_11 <= X"20";
+			sLCDLine2_12 <= X"20";
+			sLCDLine2_13 <= X"20";
+			sLCDLine2_14 <= X"20";
+			sLCDLine2_15 <= X"20";
+		elsif rising_edge(sCLK16MHz) then
+		---------------------------------
 		   if sMcuKwriteStrobe = '1' then
 				case sMcuPortId(3 downto 0) is 
 					when cUARTRstPort =>
@@ -840,7 +881,7 @@ begin
    counter_of_cmajor_tones : process(sRFMode, CLK_LFC, sAudioTestTonePhInc)
 	variable idx : integer range 0 to 7 := 0;
 	begin
-		if sRFMode = cRFTestSinePilot or sRFMode = cRFTestSine then
+		if sCentralReset = '1' then
 			idx := 0;
 			sAudioTestTonePhInc <= (others => '0');
 		else

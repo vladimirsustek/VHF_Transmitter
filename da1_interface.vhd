@@ -122,7 +122,8 @@ begin
 						 sigIFstate <= INIT_CMD_SETUP;
 			      when INIT_CMD_SETUP =>
 					    sigCmd <= conSetToZero;
-						 sigIFstate <= INIT_VOLTAGE;
+						 --sigIFstate <= INIT_VOLTAGE;
+						 sigIFstate <= READY;
 					when INIT_VOLTAGE =>
 					   sigCmd <= std_logic_vector(unsigned(conSetToZero) + unsigned(con625mV));
 						sigIFstate <= NLDAC_ACTIVE;
