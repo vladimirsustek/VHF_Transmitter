@@ -165,6 +165,8 @@ CMD_RFSMOD: LOAD&RETURN s6, SRFS_MOD$
 STRING SLCD_STB$, "LC_SB_"
 CMD_LCDSTB: LOAD&RETURN s6, SLCD_STB$
 
+STRING SSYS_RST$, "SR_ST_"
+CMD_SYSRST: LOAD&RETURN s6, SSYS_RST$
 
 ; This function is not intended to be called
 ; neither anyhow used, but by placing this 
@@ -272,7 +274,18 @@ RSP_LCDSTB: CALL UART_TX_CLEAR
 			OUTPUTK LF, 1
 			
 			RETURN
-		
+
+
+; Function sets up bit to reset and eventually returns
+STRING SRSYS_RST$, "SYS_RESET"	
+RSP_SYSRST: CALL UART_TX_CLEAR
+			OUTPUTK SRSYS_RST$, 1
+			OUTPUTK LF, 1
+			CALL DELAY_100MS
+			LOAD s5, FF
+            OUTPUT s5, cSystemResetPort
+			RETURN
+			
 ; Function sends out UART message signalizing error
 STRING SINPERR$,   "INPUTERR!"
 RSP_GENERR:     	CALL UART_TX_CLEAR
@@ -340,6 +353,14 @@ CHECK_RECEIVED:	LOAD s8, cUNKNOWN_COMAND
 				LOAD s1, RSP_LCDSTB'upper
 				LOAD s0, RSP_LCDSTB'lower
 				CALL COMPARE_CMD
+				
+				LOAD BUFF_HEAD, s7
+				
+				LOAD s3, CMD_SYSRST'upper
+				LOAD s2, CMD_SYSRST'lower
+				LOAD s1, RSP_SYSRST'upper
+				LOAD s0, RSP_SYSRST'lower
+				CALL COMPARE_CMD	
 				
 				COMPARE s8, cCORRECT_COMMAND
 				CALL NZ, RSP_GENERR
