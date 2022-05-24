@@ -388,6 +388,7 @@ signal sMcuInterrupt : std_logic := '0';
 signal sMcuInterruptAck : std_logic := '0';
 signal sMcuSleep : std_logic := '0';
 signal sMcuReset : std_logic := '0';
+signal sMcuSoftReset : std_logic := '0';
 signal sROMResetDuringLoad : std_logic := '0';
 
 -- TX UART
@@ -488,7 +489,26 @@ begin
 	
 	-- sCentralReset is initiated when both buttons are pressed 
 	
-	sCentralReset <= '1' when (BTNS = "11") else '0';
+	central_reset : process(BTNS, sMCUSoftReset, sCLK16MHz)
+	variable vCounter : integer := 0; 
+	begin
+		if sCentralReset = '1' then 
+			if rising_edge(sCLK16MHz) then
+				if vCounter = 4 then
+					sCentralReset <= '0';
+					vCounter := 0;
+				else
+					vCounter := vCounter + 1;
+				end if;
+			end if;
+		else 
+			if  BTNS = "11" or sMCUSoftReset = '1' then
+				sCentralReset <= '1';
+			end if;
+		end if;
+	end process;
+	
+	
 	
 	-- MCU reset process to allow either sCentralReset or sROMResetDuringLoad (MCU flashing)
 	MCU_Reset : process(sCentralReset, sROMResetDuringLoad)
@@ -594,6 +614,7 @@ begin
 			sDAC1WritePortReq <= '0';
 			sDDSphIncCtrl <= (others => '0');
 			sRFMode <= (others => '0');
+			sMCUSoftReset <= '0';
 			sLCDLine1_00 <= X"20";
 			sLCDLine1_01 <= X"20";
 			sLCDLine1_02 <= X"20";
@@ -660,6 +681,8 @@ begin
 						sDDSphIncCtrl(7 downto 0) <= sMcuOutPort(7 downto 0);
 					when cRFModePort =>
 						sRFMode <= sMcuOutPort;
+					when cSystemResetPort =>
+					   sMCUSoftReset <= sMcuOutPort(0);
 					when cLCDPort1_00 =>
 						sLCDLine1_00 <= sMcuOutPort;
 					when cLCDPort1_01 =>

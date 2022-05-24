@@ -8,6 +8,9 @@ NAMEREG sC, BUFF_HEAD
 
 ; KCPSM6 picoblaze needs some time for something like a "boot"
 CALL SYS_BLINK_WAIT
+CALL INIT_REGS
+CALL INIT_RAM
+
 CALL UART_RX_CLEAR
 CALL UART_TX_CLEAR
 CALL INIT_BUFF
@@ -53,7 +56,30 @@ INIT_DA1_625MV: 	LOAD BUFF_DATA, 00
 					CALL WRITE_ARG_07_00
 					CALL RSP_DA1STV
 					RETURN
-					
+
+INIT_REGS: LOAD s0, 00
+           LOAD s1, 00
+           LOAD s2, 00
+           LOAD s3, 00
+           LOAD s4, 00
+           LOAD s5, 00
+           LOAD s6, 00
+           LOAD s7, 00
+           LOAD s8, 00
+           LOAD s9, 00
+           LOAD UART_STATUS, 00
+           LOAD UART_DATA, 00
+           LOAD BUFF_HEAD, 00
+           LOAD BUFF_ISLF, 00
+           LOAD BUFF_DATA, 00
+           LOAD BUFF_TAIL, 00
+		   OUTPUT s0, cSystemResetPort
+		   RETURN
+		   
+INIT_RAM: CALL INIT_BUFF
+          RETURN
+
+
 INCLUDE "UART_MODULE.psm"
 INCLUDE "SW_DELAYS.psm"
 INCLUDE "RAM_BUFF.psm"
