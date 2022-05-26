@@ -290,6 +290,14 @@ constant sTickRead24_16Port : std_logic_vector(7 downto 0) := X"04";
 constant sTickRead15_08Port : std_logic_vector(7 downto 0) := X"05";
 constant sTickRead07_00Port : std_logic_vector(7 downto 0) := X"06";
 
+-- sDDSFreqIn
+constant cDDSFreqOutPort_07_00 : std_logic_vector(7 downto 0) := X"07";
+constant cDDSFreqOutPort_15_08 : std_logic_vector(7 downto 0) := X"08";
+constant cDDSFreqOutPort_23_16 : std_logic_vector(7 downto 0) := X"09";
+constant cDDSFreqOutPort_31_24 : std_logic_vector(7 downto 0) := X"0A";
+
+constant cDiv10OutPort_15_08 : std_logic_vector(7 downto 0) := X"10";
+constant cDiv10OutPort_07_00 : std_logic_vector(7 downto 0) := X"11";
 -- output ports
 constant cLEDPort : std_logic_vector(7 downto 0) := X"00";
 constant cTxUARTDataPort : std_logic_vector(7 downto 0) := X"01";
@@ -339,7 +347,15 @@ constant cLCDPort2_12 : std_logic_vector(7 downto 0) := X"2C";
 constant cLCDPort2_13 : std_logic_vector(7 downto 0) := X"2D";
 constant cLCDPort2_14 : std_logic_vector(7 downto 0) := X"2E";
 constant cLCDPort2_15 : std_logic_vector(7 downto 0) := X"2F";
-----------------------------------------------------------------
+
+-- sDDSFreqIn
+constant cDDSFreqInPort_07_00 : std_logic_vector(7 downto 0) := X"30";
+constant cDDSFreqInPort_15_08 : std_logic_vector(7 downto 0) := X"31";
+constant cDDSFreqInPort_23_16 : std_logic_vector(7 downto 0) := X"32";
+constant cDDSFreqInPort_31_24 : std_logic_vector(7 downto 0) := X"33";
+
+constant cDiv10InPort_15_08 : std_logic_vector(7 downto 0) := X"34";
+constant cDiv10InPort_07_00 : std_logic_vector(7 downto 0) := X"35";
 
 -- phase increment 21.00MHz synthetized by 3.57xx Hz delta_f DDS - unused = Dec 5,899,957 
 constant cDAC0_21_1MHz_phInc : std_logic_vector(24 downto 0) := "0010110100000011010110101";
@@ -479,6 +495,16 @@ signal sLCDLine2_13 : std_logic_vector(7 downto 0) := x"20";
 signal sLCDLine2_14 : std_logic_vector(7 downto 0) := x"20";
 signal sLCDLine2_15 : std_logic_vector(7 downto 0) := x"20";
 
+signal sDDSCalcPhaseInc : std_logic_vector(31 downto 0) := (others => '0');
+signal sDDSCalcFreqFull : std_logic_vector(31 downto 0) := (others => '0');
+signal sDDSCalcFreqDiv1000: std_logic_vector(31 downto 0) := (others => '0');
+signal sDDS16bCalcFreqDiv1000 : std_logic_vector(15 downto 0) := (others => '0');
+signal SDDSdec2asciiRst : std_logic := '1';
+
+
+signal sDiv10In : std_logic_vector(15 downto 0) := (others => '0');
+signal sDiv10Out : std_logic_vector(15 downto 0) := (others => '0');
+
 begin
 
 	-----------------------------------------------------------------------------
@@ -599,6 +625,7 @@ begin
 		line2_14 => sLCDLine2_14,
 		line2_15 => sLCDLine2_15
 	);
+	
 	-----------------------------------------------------------------------------
 	-- 								 OUT/IN HANDLING
 	-----------------------------------------------------------------------------							  
@@ -615,7 +642,8 @@ begin
 			sDDSphIncCtrl <= (others => '0');
 			sRFMode <= (others => '0');
 			sMCUSoftReset <= '0';
-			sLCDLine1_00 <= X"20";
+			SDDSdec2asciiRst <= '1';
+		   sLCDLine1_00 <= X"20";
 			sLCDLine1_01 <= X"20";
 			sLCDLine1_02 <= X"20";
 			sLCDLine1_03 <= X"20";
@@ -671,13 +699,15 @@ begin
 					when cDAC1_07_00Port =>
 						sDAC1BufferedValue(7 downto 0) <= sMcuOutPort(7 downto 0);
 						sDAC1WritePortReq <= '1';
-					when cDAC0_31_24Port => 
+					when cDAC0_31_24Port =>
+						SDDSdec2asciiRst <= '1';
 						sDDSphIncCtrl(24) <= sMcuOutPort(0);
 					when cDAC0_23_16Port =>
 						sDDSphIncCtrl(23 downto 16) <= sMcuOutPort(7 downto 0);
 					when cDAC0_15_08Port =>
 						sDDSphIncCtrl(15 downto 8) <= sMcuOutPort(7 downto 0);
 					when cDAC0_07_00Port =>
+						SDDSdec2asciiRst <= '0';
 						sDDSphIncCtrl(7 downto 0) <= sMcuOutPort(7 downto 0);
 					when cRFModePort =>
 						sRFMode <= sMcuOutPort;
@@ -747,6 +777,19 @@ begin
 						sLCDLine2_14 <= sMcuOutPort;
 					when cLCDPort2_15 =>
 						sLCDLine2_15 <= sMcuOutPort;
+					when cDDSFreqInPort_07_00 =>
+					   sDDSCalcPhaseInc(7 downto 0) <= sMcuOutPort;
+					when cDDSFreqInPort_15_08 =>
+						sDDSCalcPhaseInc(15 downto 8) <= sMcuOutPort;
+					when cDDSFreqInPort_23_16 =>
+						sDDSCalcPhaseInc(23 downto 16) <= sMcuOutPort;
+					when cDDSFreqInPort_31_24 =>
+						sDDSCalcPhaseInc(31 downto 24) <= sMcuOutPort;
+						SDDSdec2asciiRst <= '0';
+					when cDiv10InPort_15_08 =>
+						sDiv10In(15 downto 8) <= sMcuOutPort;
+					when cDiv10InPort_07_00 =>
+						sDiv10In(07 downto 0) <= sMcuOutPort;
 					when others =>
 				end case;
 			end if;
@@ -792,6 +835,14 @@ begin
 					sMcuInPort <= sTick1ms(15 downto 08);
 				when sTickRead07_00Port =>
 					sMcuInPort <= sTick1ms(07 downto 00);
+				when cDDSFreqOutPort_07_00 =>
+					sMcuInPort <= sDDS16bCalcFreqDiv1000(7 downto 0);
+				when cDDSFreqOutPort_15_08 =>
+					sMcuInPort <= sDDS16bCalcFreqDiv1000(15 downto 08);
+				when cDiv10InPort_15_08 =>
+					sMcuInPort <= sDiv10Out(15 downto 8);
+				when cDiv10InPort_07_00 =>
+					sMcuInPort <= sDiv10Out(7 downto 0);					
 				when others =>
 					sMcuInPort <= (others => 'X');
 			end  case;
@@ -1093,7 +1144,15 @@ begin
 	end if;
 	DAC0_DATA <= sSumDDS;
 end process;
+
+   -- input multiplied by 3.5763
+	sDDSCalcFreqFull <= std_logic_vector((X"00000000" + shift_left(unsigned(sDDSphIncCtrl), 1) + unsigned(sDDSphIncCtrl) + shift_right(unsigned(sDDSphIncCtrl), 1) + shift_right(unsigned(sDDSphIncCtrl), 4) + shift_right(unsigned(sDDSphIncCtrl), 7) + shift_right(unsigned(sDDSphIncCtrl), 8) + shift_right(unsigned(sDDSphIncCtrl), 9) + shift_right(unsigned(sDDSphIncCtrl), 13)+ shift_right(unsigned(sDDSphIncCtrl), 13)));
+	-- input multiplied by 1.000404358e-3
+	-- 2e-9 - 2e-10 + 2e-15 - 2e-18 - 2e-19 - 2e-20
+	sDDSCalcFreqDiv1000 <= std_logic_vector(X"00000000" + shift_right(unsigned(sDDSCalcFreqFull), 9) - shift_right(unsigned(sDDSCalcFreqFull), 10) + shift_right(unsigned(sDDSCalcFreqFull), 15) - shift_right(unsigned(sDDSCalcFreqFull), 18) - shift_right(unsigned(sDDSCalcFreqFull), 19) - shift_right(unsigned(sDDSCalcFreqFull), 20));
+	sDDS16bCalcFreqDiv1000 <= std_logic_vector(x"0000" + unsigned(sDDSCalcFreqDiv1000(15 downto 0)));
 	
+	sDiv10Out <= std_logic_vector(shift_right(unsigned(sDiv10In),4) + shift_right(unsigned(sDiv10In),5) + shift_right(unsigned(sDiv10In),8) + shift_right(unsigned(sDiv10In),9) + shift_right(unsigned(sDiv10In),11));				
 
 end Behavioral;
 
