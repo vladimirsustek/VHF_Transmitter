@@ -83,6 +83,11 @@ CONSTANT sTickRead23_16Port, 04
 CONSTANT sTickRead15_08Port, 05
 CONSTANT sTickRead07_00Port, 06
 
+CONSTANT cDDSFreqOutPort_07_00, 07
+CONSTANT cDDSFreqOutPort_15_08, 08
+CONSTANT cDDSFreqOutPort_23_16, 09
+CONSTANT cDDSFreqOutPort_31_24, 0A
+
 ; OUTPUT
 CONSTANT cTxUARTDataPort, 01
 CONSTANT cDAC1_07_00Port, 03
@@ -97,7 +102,43 @@ CONSTANT cRFModePort, 09
 CONSTANT cSystemResetPort, 0A
 
 CONSTANT cLCDPort1_00, 10
+CONSTANT cLCDPort1_01, 11
+CONSTANT cLCDPort1_02, 12
+CONSTANT cLCDPort1_03, 13
+CONSTANT cLCDPort1_04, 14
+CONSTANT cLCDPort1_05, 15
+CONSTANT cLCDPort1_06, 16
+CONSTANT cLCDPort1_07, 17
+CONSTANT cLCDPort1_08, 18
+CONSTANT cLCDPort1_09, 19
+CONSTANT cLCDPort1_10, 1A
+CONSTANT cLCDPort1_11, 1B
+CONSTANT cLCDPort1_12, 1C
+CONSTANT cLCDPort1_13, 1D
+CONSTANT cLCDPort1_14, 1E
+CONSTANT cLCDPort1_15, 1F
+
+CONSTANT cLCDPort2_00, 20
+CONSTANT cLCDPort2_01, 21
+CONSTANT cLCDPort2_02, 22
+CONSTANT cLCDPort2_03, 23
+CONSTANT cLCDPort2_04, 24
+CONSTANT cLCDPort2_05, 25
+CONSTANT cLCDPort2_06, 26
+CONSTANT cLCDPort2_07, 27
+CONSTANT cLCDPort2_08, 28
+CONSTANT cLCDPort2_09, 29
+CONSTANT cLCDPort2_10, 2A
+CONSTANT cLCDPort2_11, 2B
+CONSTANT cLCDPort2_12, 2C
+CONSTANT cLCDPort2_13, 2D
+CONSTANT cLCDPort2_14, 2E
 CONSTANT cLCDPort2_15, 2F
+
+CONSTANT cDDSFreqInPort_07_00, 30;
+CONSTANT cDDSFreqInPort_15_08, 31;
+CONSTANT cDDSFreqInPort_23_16, 32;
+CONSTANT cDDSFreqInPort_31_24, 33;
 
 CONSTANT cUNKNOWN_COMAND, AA
 CONSTANT cCORRECT_COMMAND, 55
@@ -210,12 +251,42 @@ RSP_DA0STI: CALL UART_TX_CLEAR
 
 			CALL READ_ARG_31_24
 			OUTPUT BUFF_DATA, cDAC0_31_24Port
+			OUTPUT BUFF_DATA, cDDSFreqInPort_31_24
 			CALL READ_ARG_23_16
 			OUTPUT BUFF_DATA, cDAC0_23_16Port
+			OUTPUT BUFF_DATA, cDDSFreqInPort_23_16
 			CALL READ_ARG_15_08
 			OUTPUT BUFF_DATA, cDAC0_15_08Port
+			OUTPUT BUFF_DATA, cDDSFreqInPort_15_08
 			CALL READ_ARG_07_00
 			OUTPUT BUFF_DATA, cDAC0_07_00Port
+			OUTPUT BUFF_DATA, cDDSFreqInPort_07_00
+			
+			
+			INPUT BUFF_DATA, cDDSFreqOutPort_31_24
+			CALL HEX2ASCII_UPPER
+			OUTPUT s5, cLCDPort1_00
+			CALL HEX2ASCII_LOWER
+			OUTPUT s5, cLCDPort1_01
+			
+			INPUT BUFF_DATA, cDDSFreqOutPort_23_16
+			CALL HEX2ASCII_UPPER
+			OUTPUT s5, cLCDPort1_02
+			CALL HEX2ASCII_LOWER
+			OUTPUT s5, cLCDPort1_03
+			
+			INPUT BUFF_DATA, cDDSFreqOutPort_15_08
+			CALL HEX2ASCII_UPPER
+			OUTPUT s5, cLCDPort1_04
+			CALL HEX2ASCII_LOWER
+			OUTPUT s5, cLCDPort1_05
+						
+			INPUT BUFF_DATA, cDDSFreqOutPort_07_00
+			CALL HEX2ASCII_UPPER
+			OUTPUT s5, cLCDPort1_06
+			CALL HEX2ASCII_LOWER
+			OUTPUT s5, cLCDPort1_07
+			
 			OUTPUTK SRDA0_SET$, 1
 		    OUTPUTK LF, 1
 			
@@ -425,15 +496,41 @@ iter32b:	  CALL READ_BUFF
 			  RETURN Z
 
 ; Function to convert character into hex number	("A" -> 0xA)
-ASCII2HEX:    SUB BUFF_DATA, 30
-			  COMPARE BUFF_DATA, LF
-			  RETURN C
-			  SUB BUFF_DATA, 07
-			  COMPARE BUFF_DATA, 10
-			  RETURN C
-			  SUB BUFF_DATA, 20
+; Function convert max 1 hex digit, expected input "0-9", "A-F" or "a-f"
+ASCII2HEX:    SUB BUFF_DATA, 30 ; first subtract 48 ("0")
+			  COMPARE BUFF_DATA, LF; check whether its a decadic number
+			  RETURN C ; return if it is a number 0-9 (BUFF_DATA < LF)
+			  SUB BUFF_DATA, 07 ; substract by 7 (7 chars between "9" - "A")
+			  COMPARE BUFF_DATA, 10 ; check whether input is A-F (10-15)
+			  RETURN C ; return if it is a letter A-F
+			  SUB BUFF_DATA, 20 ; ; substract by 32 (32 chars between "F" - "a")
 			  RETURN
 
+; Function converts upper BUFF_DATA register nibble which is (always) 
+; within 0x0 - 0xF into ASCII "0-9", "A-F" respectively
+; Function output s5 is directly capable for LCD_16x2 driving
+HEX2ASCII_UPPER: LOAD s5, BUFF_DATA
+				 AND s5, F0
+				 SR0 s5
+				 SR0 s5
+				 SR0 s5
+				 SR0 s5
+				 ADD s5, 30
+				 COMPARE s5, 3A
+				 RETURN C
+				 ADD s5, 07
+				 
+				 RETURN
+; Function converts lower BUFF_DATA register nibble which is (always) 
+; within 0x0 - 0xF into ASCII "0-9", "A-F" respectively
+; Function output s5 is directly capable for LCD_16x2 driving
+HEX2ASCII_LOWER: LOAD s5, BUFF_DATA
+				 AND s5, 0F
+				 ADD s5, 30
+				 COMPARE s5, 3A
+				 RETURN C
+				 ADD s5, 07
+				 RETURN 
 			  
 ; PRINT_ARG:    CALL READ_ARG_31_24
 			  ; OUTPUT BUFF_DATA, cTxUARTDataPort
