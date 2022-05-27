@@ -296,8 +296,14 @@ constant cDDSFreqOutPort_15_08 : std_logic_vector(7 downto 0) := X"08";
 constant cDDSFreqOutPort_23_16 : std_logic_vector(7 downto 0) := X"09";
 constant cDDSFreqOutPort_31_24 : std_logic_vector(7 downto 0) := X"0A";
 
+-- DIV 10 logic block
 constant cDiv10OutPort_15_08 : std_logic_vector(7 downto 0) := X"10";
 constant cDiv10OutPort_07_00 : std_logic_vector(7 downto 0) := X"11";
+
+-- 
+constant cDACCalcVoltPort_15_08 : std_logic_vector(7 downto 0) := X"12";
+constant cDACCalcVoltPort_07_00 : std_logic_vector(7 downto 0) := X"13";
+
 -- output ports
 constant cLEDPort : std_logic_vector(7 downto 0) := X"00";
 constant cTxUARTDataPort : std_logic_vector(7 downto 0) := X"01";
@@ -356,6 +362,9 @@ constant cDDSFreqInPort_31_24 : std_logic_vector(7 downto 0) := X"33";
 
 constant cDiv10InPort_15_08 : std_logic_vector(7 downto 0) := X"34";
 constant cDiv10InPort_07_00 : std_logic_vector(7 downto 0) := X"35";
+
+constant cMlt10InPort_15_08 : std_logic_vector(7 downto 0) := X"36";
+constant cMlt10InPort_07_00 : std_logic_vector(7 downto 0) := X"37";
 
 -- phase increment 21.00MHz synthetized by 3.57xx Hz delta_f DDS - unused = Dec 5,899,957 
 constant cDAC0_21_1MHz_phInc : std_logic_vector(24 downto 0) := "0010110100000011010110101";
@@ -427,6 +436,7 @@ signal sRxUARTdata : std_logic_vector(7 downto 0) := (others => '0');
 
 -- RF DAC1
 signal sDAC1BufferedValue : std_logic_vector(15 downto 0) := (others => '0');
+signal sDACCalcVolt : std_logic_vector(15 downto 0) := (others => '0');
 signal sDAC1ReadyValue : std_logic_vector(15 downto 0) := (others => '0');
 signal sDAC1WritePortReq : std_logic := '0';
 signal sDAC1WritePortAck : std_logic := '0';
@@ -504,6 +514,8 @@ signal SDDSdec2asciiRst : std_logic := '1';
 
 signal sDiv10In : std_logic_vector(15 downto 0) := (others => '0');
 signal sDiv10Out : std_logic_vector(15 downto 0) := (others => '0');
+signal sMlt10In : std_logic_vector(15 downto 0) := (others => '0');
+signal sMlt10Out : std_logic_vector(15 downto 0) := (others => '0');
 
 begin
 
@@ -790,6 +802,10 @@ begin
 						sDiv10In(15 downto 8) <= sMcuOutPort;
 					when cDiv10InPort_07_00 =>
 						sDiv10In(07 downto 0) <= sMcuOutPort;
+					when cMlt10InPort_15_08 =>
+						sMlt10In(15 downto 8) <= sMcuOutPort;
+					when cMlt10InPort_07_00 =>
+						sMlt10In(07 downto 0) <= sMcuOutPort;
 					when others =>
 				end case;
 			end if;
@@ -842,7 +858,15 @@ begin
 				when cDiv10InPort_15_08 =>
 					sMcuInPort <= sDiv10Out(15 downto 8);
 				when cDiv10InPort_07_00 =>
-					sMcuInPort <= sDiv10Out(7 downto 0);					
+					sMcuInPort <= sDiv10Out(7 downto 0);
+				when cDACCalcVoltPort_15_08 =>
+					sMcuInPort <= sDACCalcVolt(15 downto 8);
+				when cDACCalcVoltPort_07_00 =>
+					sMcuInPort <= sDACCalcVolt(7 downto 0);
+				when cMlt10InPort_15_08 =>
+					sMcuInPort <= sMlt10Out(15 downto 8);
+				when cMlt10InPort_07_00 =>
+					sMcuInPort <= sMlt10Out(7 downto 0);					
 				when others =>
 					sMcuInPort <= (others => 'X');
 			end  case;
@@ -1152,7 +1176,10 @@ end process;
 	sDDSCalcFreqDiv1000 <= std_logic_vector(X"00000000" + shift_right(unsigned(sDDSCalcFreqFull), 9) - shift_right(unsigned(sDDSCalcFreqFull), 10) + shift_right(unsigned(sDDSCalcFreqFull), 15) - shift_right(unsigned(sDDSCalcFreqFull), 18) - shift_right(unsigned(sDDSCalcFreqFull), 19) - shift_right(unsigned(sDDSCalcFreqFull), 20));
 	sDDS16bCalcFreqDiv1000 <= std_logic_vector(x"0000" + unsigned(sDDSCalcFreqDiv1000(15 downto 0)));
 	
-	sDiv10Out <= std_logic_vector(shift_right(unsigned(sDiv10In),4) + shift_right(unsigned(sDiv10In),5) + shift_right(unsigned(sDiv10In),8) + shift_right(unsigned(sDiv10In),9) + shift_right(unsigned(sDiv10In),11));				
+	sDACCalcVolt <= std_logic_vector(X"0000" + shift_right(unsigned(sDAC1BufferedValue), 4) + shift_right(unsigned(sDAC1BufferedValue), 7) + shift_right(unsigned(sDAC1BufferedValue), 8) + shift_right(unsigned(sDAC1BufferedValue), 9) + shift_right(unsigned(sDAC1BufferedValue), 13));
+
+	sDiv10Out <= std_logic_vector(x"0000"+ unsigned(sDiv10In)/10);			
+	sMlt10Out <= std_logic_vector(x"0000"+ shift_left(unsigned(sMlt10In), 3) + shift_left(unsigned(sMlt10In), 3));			
 
 end Behavioral;
 

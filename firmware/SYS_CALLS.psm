@@ -1,7 +1,3 @@
-				;STRING READY_MSG$, "Ready!"
-				;OUTPUTK READY_MSG$, 1
-				;OUTPUTK 0A, 1
-				
 SYS_BLINK_WAIT:	LOAD s9, 80
 				OUTPUT s9, 00
 				CALL DELAY_100MS
@@ -20,4 +16,47 @@ SYS_BLINK_WAIT:	LOAD s9, 80
 				
 				LOAD s9, 00
 				OUTPUT s9, 00
+				CALL DELAY_100MS				
+				
+				LOAD s9, 10
+				OUTPUT s9, 00
+				CALL DELAY_100MS
+	
+				LOAD s9, 30
+				OUTPUT s9, 00
+				CALL DELAY_100MS
+
+				LOAD s9, 70
+				OUTPUT s9, 00
+				CALL DELAY_100MS				
+				
+				LOAD s9, F0
+				OUTPUT s9, 00
+				CALL DELAY_100MS				
+
+				LOAD s9, 00
+				OUTPUT s9, 00
+				
+				RETURN
+				
+SYS_MESSAGE_ACK:
+				LOAD s9, 00
+				OUTPUT s9, 00
+				CALL DELAY_100MS				
+				
+				LOAD s9, F0
+				OUTPUT s9, 00
+				CALL DELAY_100MS
+				
+				LOAD s9, 00
+				OUTPUT s9, 00
+				CALL DELAY_100MS				
+				
+				LOAD s9, F0
+				OUTPUT s9, 00
+				CALL DELAY_100MS
+				
+				LOAD s9, 00
+				OUTPUT s9, 00
+				
 				RETURN
