@@ -1169,19 +1169,30 @@ begin
 	end if;
 	DAC0_DATA <= sSumDDS;
 end process;
-
-   -- input multiplied by 3.5763
-	sDDSCalcFreqFull <= std_logic_vector((X"00000000" + shift_left(unsigned(sDDSphIncCtrl), 1) + unsigned(sDDSphIncCtrl) + shift_right(unsigned(sDDSphIncCtrl), 1) + shift_right(unsigned(sDDSphIncCtrl), 4) + shift_right(unsigned(sDDSphIncCtrl), 7) + shift_right(unsigned(sDDSphIncCtrl), 8) + shift_right(unsigned(sDDSphIncCtrl), 9) + shift_right(unsigned(sDDSphIncCtrl), 13)+ shift_right(unsigned(sDDSphIncCtrl), 13)));
-	-- input multiplied by 1.000404358e-3
-	-- 2e-9 - 2e-10 + 2e-15 - 2e-18 - 2e-19 - 2e-20
-	sDDSCalcFreqDiv1000 <= std_logic_vector(X"00000000" + shift_right(unsigned(sDDSCalcFreqFull), 9) - shift_right(unsigned(sDDSCalcFreqFull), 10) + shift_right(unsigned(sDDSCalcFreqFull), 15) - shift_right(unsigned(sDDSCalcFreqFull), 18) - shift_right(unsigned(sDDSCalcFreqFull), 19) - shift_right(unsigned(sDDSCalcFreqFull), 20));
-	sDDS16bCalcFreqDiv1000 <= std_logic_vector(x"0000" + unsigned(sDDSCalcFreqDiv1000(15 downto 0)));
+    -- CALCULATION HELPER LOGIC WHICH COOPERATES WITH THE MCU (USED FOR DIFFICULT FRACTIONAL CALCULATIONS)
 	
+    ----------------------------------------------------------------------------------------------------------------
+	-- HW calculations for 25bit-DDS driven DA0 converter with exact HW parameters:
+	-- delta_f = (f_clk)/(2^25) = (120e6)/(2^25) = 3.576278687 Hz
+	-- whereas the DDS_out_f = delta_f * phaseInc
+    -- sDDSCalcFreqFull's SHIFT-ARITHMETIC is equal to multiplication by 3.576293945
+	-- the error between exact HW delta_f and SHIFT-ARITHMETIC is ~ 4e-6
+	 ----------------------------------------------------------------------------------------------------------------
+	sDDSCalcFreqFull <= std_logic_vector((X"00000000" + shift_left(unsigned(sDDSphIncCtrl), 1) + unsigned(sDDSphIncCtrl) + shift_right(unsigned(sDDSphIncCtrl), 1) + shift_right(unsigned(sDDSphIncCtrl), 4) + shift_right(unsigned(sDDSphIncCtrl), 7) + shift_right(unsigned(sDDSphIncCtrl), 8) + shift_right(unsigned(sDDSphIncCtrl), 9) + shift_right(unsigned(sDDSphIncCtrl), 13)));
+	-- input sDDSCalcFreqFull multiplied by 1.00004673e-3 ~ divison 1000x to display shorter kHz instead MHz
+	sDDSCalcFreqDiv1000 <= std_logic_vector(X"00000000" + shift_right(unsigned(sDDSCalcFreqFull), 9) - shift_right(unsigned(sDDSCalcFreqFull), 10) + shift_right(unsigned(sDDSCalcFreqFull), 15) - shift_right(unsigned(sDDSCalcFreqFull), 18) - shift_right(unsigned(sDDSCalcFreqFull), 19) - shift_right(unsigned(sDDSCalcFreqFull), 20) - shift_right(unsigned(sDDSCalcFreqFull), 22) - shift_right(unsigned(sDDSCalcFreqFull), 23));
+	-- input sliced to get lower 16 bits to reduce final signal bit-width
+	sDDS16bCalcFreqDiv1000 <= std_logic_vector(x"0000" + unsigned(sDDSCalcFreqDiv1000(15 downto 0)));
+	 ----------------------------------------------------------------------------------------------------------------
+	-- HW calculations for 16bit DA1 with full output voltage 5000mV
+	-- thus the voltage resolution is V_max/(2^16) = 0.07629394531mV
+	-- sDACCalcVolt's SHIFT-ARITHMETIC is equal to multiplication by 0.076293
 	sDACCalcVolt <= std_logic_vector(X"0000" + shift_right(unsigned(sDAC1BufferedValue), 4) + shift_right(unsigned(sDAC1BufferedValue), 7) + shift_right(unsigned(sDAC1BufferedValue), 8) + shift_right(unsigned(sDAC1BufferedValue), 9) + shift_right(unsigned(sDAC1BufferedValue), 13));
-
+	 ----------------------------------------------------------------------------------------------------------------
+	-- General purpose HW 16-bit divider and multiplier with exact calculations
 	sDiv10Out <= std_logic_vector(x"0000"+ unsigned(sDiv10In)/10);			
-	sMlt10Out <= std_logic_vector(x"0000"+ shift_left(unsigned(sMlt10In), 3) + shift_left(unsigned(sMlt10In), 3));			
-
+	sMlt10Out <= std_logic_vector(x"0000"+ shift_left(unsigned(sMlt10In), 3) + shift_left(unsigned(sMlt10In), 1));			
+    ----------------------------------------------------------------------------------------------------------------
 end Behavioral;
 
 

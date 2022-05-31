@@ -242,7 +242,9 @@ CMD_DUMMY: LOAD&RETURN s6, SDUMMY$
 ; Function sets DA1 voltage by shifting out
 ; the 16-bit value in two 8-bit chunks
 ; Therefore, buffering at the output is expected
-; Function finished with UART message
+; Function finishes with UART message and setting
+; characters on the display within cLCDPort_2_09 - cLCDPort_2_15
+; FUNCTION CONTAINS SEQUENCE TO CONVERT HEX INTO ASCII
 STRING SRDA1_STV$, "DA1:V-set"
 RSP_DA1STV: CALL UART_TX_CLEAR
 						
@@ -251,27 +253,60 @@ RSP_DA1STV: CALL UART_TX_CLEAR
 			CALL READ_ARG_07_00
 			OUTPUT BUFF_DATA, cDAC1Port_07_00
 			
-			OUTPUTK SRDA1_STV$, 1
-		    OUTPUTK LF, 1
+			INPUT s0, cDACCalcVoltReadPort_15_08
+			INPUT s1, cDACCalcVoltReadPort_07_00
 			
-		    ; LOAD s0, 00
-            ; LOAD s1, 00
-            ; LOAD s2, 00
-            ; LOAD s3, 00
-            ; LOAD s4, 00
-            ; LOAD s5, 00
-            ; LOAD s6, 00
-            ; LOAD s7, 00
-            ; LOAD s8, 00
-            ; LOAD s9, 00
-            ; LOAD sA, 00
+			LOAD s3, cLCDPort_2_13
+
+; 16-bit HEX2ASCII conversion begin
+div10_da1:	LOAD s2, s1
+			OUTPUT s0, cDiv10WritePort_15_08 ; send value for FPGA HW div 10
+			OUTPUT s1, cDiv10WritePort_07_00
+			INPUT s0, cDiv10ReadPort_15_08 ; receive value after FPGA HW div 10
+			INPUT s1, cDiv10ReadPort_07_00
+			
+			OUTPUT s0, cMlt10WritePort_15_08 ; send value for FPGA HW mlt 10
+			OUTPUT s1, cMlt10WritePort_07_00
+			INPUT s0, cMlt10ReadPort_15_08; receive value after FPGA HW mlt 10
+			INPUT s1, cMlt10ReadPort_07_00
+					
+			SUB s2, s1 ; get last decadic digit
+			ADD s2, 30 ; make the digit an ASCII character
+			OUTPUT s2, (s3) ; send the character to the LCD
+			SUB s3, 01 ; increment LCD character position
+			
+			OR s1, 00 ; get converted number into STATUS context
+			JUMP Z, da1_end ; if the number is 0, leave - finished conversion
+			
+			OUTPUT s0, cDiv10WritePort_15_08 ; send value for FPGA HW div 10
+			OUTPUT s1, cDiv10WritePort_07_00
+			INPUT s0, cDiv10ReadPort_15_08 ; receive value after FPGA HW div 10
+			INPUT s1, cDiv10ReadPort_07_00
+			JUMP div10_da1
+			
+da1_end:    LOAD s2, "m"
+			OUTPUT s2, cLCDPort_2_14
+			LOAD s2, "V"
+			OUTPUT s2, cLCDPort_2_15
+			
+			OUTPUTK SRDA1_STV$, 1
+		    OUTPUTK LF, 1	
+			
+da1_crlcd:  COMPARE s3, cLCDPort_2_09 ; padd unused characters with SPACE (when the new number is smaller)
+			RETURN Z ; if there is no character to clean (5-digit width), simply return
+			LOAD s2, " "
+			OUTPUT s2, (s3)
+			SUB s3, 01
+			JUMP da1_crlcd
 			
 			RETURN
-
+			
 ; Function sets DA0 phase increment by shifting out
 ; the 32-bit value in four 8-bit chunks
 ; Therefore, buffering at the output is expected
-; Function finished with UART message	
+; Function finishes with UART message and setting
+; characters on the display within cLCDPort_1_07 - cLCDPort_1_15
+; FUNCTION CONTAINS SEQUENCE TO CONVERT HEX INTO ASCII
 STRING SRDA0_SET$, "DA0:I-set"
 RSP_DA0STI: CALL UART_TX_CLEAR
 
@@ -291,33 +326,50 @@ RSP_DA0STI: CALL UART_TX_CLEAR
 			INPUT s0, cDDSFreqReadPort_15_08 ; READ Phase Inc multiplied 3.5763 and 1.000404358e-3	
 			INPUT s1, cDDSFreqReadPort_07_00
 			
-			OUTPUT s0, cDiv10WritePort_07_00 ; send value for hw div 10
-			OUTPUT s1, cDiv10WritePort_15_08
-			
-			INPUT s0, cDiv10ReadPort_07_00 ; receive value after hw div 10
+			LOAD s3, cLCDPort_1_12
+; 16-bit HEX2ASCII conversion begin		
+div10_da0:	LOAD s2, s1
+			OUTPUT s0, cDiv10WritePort_15_08 ; send value for FPGA HW div 10
+			OUTPUT s1, cDiv10WritePort_07_00
+			INPUT s0, cDiv10ReadPort_15_08 ; receive value after FPGA HW div 10
 			INPUT s1, cDiv10ReadPort_07_00
 			
-			OUTPUT s0, cMlt10WritePort_07_00 ; send value for hw mlt 10
-			OUTPUT s1, cMlt10WritePort_15_08
-			
-			INPUT s0, cMlt10ReadPort_07_00; receive value after hw mlt 10
+			OUTPUT s0, cMlt10WritePort_15_08 ; send value for FPGA HW mlt 10
+			OUTPUT s1, cMlt10WritePort_07_00
+			INPUT s0, cMlt10ReadPort_15_08; receive value after FPGA HW mlt 10
 			INPUT s1, cMlt10ReadPort_07_00
+					
+			SUB s2, s1 ; get last decadic digit
+			ADD s2, 30 ; make the digit an ASCII character
+			OUTPUT s2, (s3) ; send the character to the LCD
+			SUB s3, 01 ; increment LCD character position
 			
-			LOAD BUFF_DATA, s0
-			CALL HEX2ASCII_UPPER
-			OUTPUT s5, cLCDPort_1_00
-			CALL HEX2ASCII_LOWER
-			OUTPUT s5, cLCDPort_1_01
-
-			LOAD BUFF_DATA, s1
-			CALL HEX2ASCII_UPPER
-			OUTPUT s5, cLCDPort_1_02
-			CALL HEX2ASCII_LOWER
-			OUTPUT s5, cLCDPort_1_03
-						
+			OR s1, 00 ; get converted number into STATUS context
+			JUMP Z, da0_end ; if the number is 0, leave - finished conversion
+			
+			OUTPUT s0, cDiv10WritePort_15_08 ; send value for FPGA HW div 10
+			OUTPUT s1, cDiv10WritePort_07_00
+			INPUT s0, cDiv10ReadPort_15_08 ; receive value after FPGA HW div 10
+			INPUT s1, cDiv10ReadPort_07_00
+			JUMP div10_da0
+			
+da0_end:    LOAD s2, "k"
+			OUTPUT s2, cLCDPort_1_13
+			LOAD s2, "H"
+			OUTPUT s2, cLCDPort_1_14
+			LOAD s2, "z"
+			OUTPUT s2, cLCDPort_1_15
+			
 			OUTPUTK SRDA0_SET$, 1
-		    OUTPUTK LF, 1
-			
+			OUTPUTK LF, 1
+
+da0_crlcd:  COMPARE s3, cLCDPort_1_07 ; clearing unused characters (when the new number is smaller)
+			RETURN Z  ; if there is no character to clean (5-digit width), simply return
+			LOAD s2, " "
+			OUTPUT s2, (s3)
+			SUB s3, 01
+			JUMP da0_crlcd
+
 			RETURN
 
 ; Function sets RF Mode by setting 8-bit value
@@ -331,18 +383,6 @@ RSP_RFSMOD: CALL UART_TX_CLEAR
 			
 			OUTPUTK SRRFS_MOD$, 1
 		    OUTPUTK LF, 1
-			
-			; LOAD s0, 00
-            ; LOAD s1, 00
-            ; LOAD s2, 00
-            ; LOAD s3, 00
-            ; LOAD s4, 00
-            ; LOAD s5, 00
-            ; LOAD s6, 00
-            ; LOAD s7, 00
-            ; LOAD s8, 00
-            ; LOAD s9, 00
-            ; LOAD sA, 00
 			
 			RETURN
 
@@ -364,18 +404,6 @@ RSP_TCKGET: CALL UART_TX_CLEAR
 
 			OUTPUTK LF, 1
 			
-			; LOAD s0, 00
-            ; LOAD s1, 00
-            ; LOAD s2, 00
-            ; LOAD s3, 00
-            ; LOAD s4, 00
-            ; LOAD s5, 00
-            ; LOAD s6, 00
-            ; LOAD s7, 00
-            ; LOAD s8, 00
-            ; LOAD s9, 00
-            ; LOAD sA, 00
-			
 			RETURN
 
 
@@ -396,18 +424,6 @@ RSP_LCDSTB: CALL UART_TX_CLEAR
 
 			OUTPUTK LF, 1
 			
-			; LOAD s0, 00
-            ; LOAD s1, 00
-            ; LOAD s2, 00
-            ; LOAD s3, 00
-            ; LOAD s4, 00
-            ; LOAD s5, 00
-            ; LOAD s6, 00
-            ; LOAD s7, 00
-            ; LOAD s8, 00
-            ; LOAD s9, 00
-            ; LOAD sA, 00
-			
 			RETURN
 
 
@@ -419,18 +435,6 @@ RSP_SYSRST: CALL UART_TX_CLEAR
 			CALL DELAY_100MS
 			LOAD s5, FF
             OUTPUT s5, cSystemResetPort
-			
-			; LOAD s0, 00
-            ; LOAD s1, 00
-            ; LOAD s2, 00
-            ; LOAD s3, 00
-            ; LOAD s4, 00
-            ; LOAD s5, 00
-            ; LOAD s6, 00
-            ; LOAD s7, 00
-            ; LOAD s8, 00
-            ; LOAD s9, 00
-            ; LOAD sA, 00
 			
 			RETURN
 			
