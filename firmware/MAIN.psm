@@ -1,10 +1,10 @@
-NAMEREG sA, UART_STATUS
-NAMEREG sB, UART_DATA
 
 NAMEREG sF, BUFF_TAIL
 NAMEREG sE, BUFF_DATA
 NAMEREG sD, BUFF_ISLF
 NAMEREG sC, BUFF_HEAD
+
+NAMEREG sB, UART_STATUS
 
 ; KCPSM6 picoblaze needs some time for something like a "boot"
 CALL SYS_BLINK_WAIT
@@ -26,8 +26,7 @@ infinite:		CALL UART_RX; get status of the UART
 				CALL Z, CHECK_RECEIVED; check the saved content, respectively initiate action
 				JUMP infinite
 
-SAVE_BYTE:		LOAD BUFF_DATA, UART_DATA
-				CALL WRITE_BUFF
+SAVE_BYTE:		CALL WRITE_BUFF; write byte BUFF_DATA into RAM BUFFER
 				RETURN
 
 ; Stores value 0x005A06B5 and sends into the DDS Phase Increment
@@ -68,8 +67,8 @@ INIT_REGS: LOAD s0, 00
            LOAD s7, 00
            LOAD s8, 00
            LOAD s9, 00
-           LOAD UART_STATUS, 00
-           LOAD UART_DATA, 00
+           LOAD sA, 00
+		   LOAD UART_STATUS, 00
            LOAD BUFF_HEAD, 00
            LOAD BUFF_ISLF, 00
            LOAD BUFF_DATA, 00

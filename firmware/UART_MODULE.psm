@@ -42,7 +42,7 @@ txrstdcr:		SUB UART_STATUS, 01
 UART_TX:		INPUT UART_STATUS, UART_STATUS_PORT
 				TEST UART_STATUS, UART_TX_FULL
 				JUMP NZ, UART_TX
-				OUTPUT UART_DATA, TX_UART_PORT
+				OUTPUT BUFF_DATA, TX_UART_PORT
 				RETURN
 
 ;---------------------------------------------------		
@@ -62,7 +62,7 @@ UART_RX: 	INPUT UART_STATUS, UART_STATUS_PORT
 			JUMP NZ, rx_read
 			LOAD&RETURN UART_STATUS, UART_NO_DATA_PRESENT
 			
-rx_read:	INPUT UART_DATA, RX_UART_PORT
+rx_read:	INPUT BUFF_DATA, RX_UART_PORT
 			LOAD&RETURN UART_STATUS, UART_RX_DATA_PRESENT
 		
 ;--------------------------------------------------
@@ -96,7 +96,7 @@ rx_read:	INPUT UART_DATA, RX_UART_PORT
 			; JUMP Z, no_data
 			; JUMP rx_timeout
 			
-; rx_read:	INPUT UART_DATA, RX_UART_PORT
+; rx_read:	INPUT BUFF_DATA, RX_UART_PORT
 			; LOAD UART_STATUS, UART_RX_DATA_PRESENT
 			; RETURN
 			

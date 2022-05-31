@@ -2,61 +2,61 @@ SYS_BLINK_WAIT:	LOAD s9, 80
 				OUTPUT s9, 00
 				CALL DELAY_100MS
 	
-				LOAD s9, C0
-				OUTPUT s9, 00
+				LOAD s0, C0
+				OUTPUT s0, 00
 				CALL DELAY_100MS
 
-				LOAD s9, E0
-				OUTPUT s9, 00
+				LOAD s0, E0
+				OUTPUT s0, 00
 				CALL DELAY_100MS
 
-				LOAD s9, F0
-				OUTPUT s9, 00
+				LOAD s0, F0
+				OUTPUT s0, 00
 				CALL DELAY_100MS				
 				
-				LOAD s9, 00
-				OUTPUT s9, 00
+				LOAD s0, 00
+				OUTPUT s0, 00
 				CALL DELAY_100MS				
 				
-				LOAD s9, 10
-				OUTPUT s9, 00
+				LOAD s0, 10
+				OUTPUT s0, 00
 				CALL DELAY_100MS
 	
-				LOAD s9, 30
-				OUTPUT s9, 00
+				LOAD s0, 30
+				OUTPUT s0, 00
 				CALL DELAY_100MS
 
-				LOAD s9, 70
-				OUTPUT s9, 00
+				LOAD s0, 70
+				OUTPUT s0, 00
 				CALL DELAY_100MS				
 				
-				LOAD s9, F0
-				OUTPUT s9, 00
+				LOAD s0, F0
+				OUTPUT s0, 00
 				CALL DELAY_100MS				
 
-				LOAD s9, 00
-				OUTPUT s9, 00
+				LOAD s0, 00
+				OUTPUT s0, 00
 				
 				RETURN
 				
 SYS_MESSAGE_ACK:
-				LOAD s9, 00
-				OUTPUT s9, 00
+				LOAD s0, 00
+				OUTPUT s0, 00
 				CALL DELAY_100MS				
 				
-				LOAD s9, F0
-				OUTPUT s9, 00
+				LOAD s0, F0
+				OUTPUT s0, 00
 				CALL DELAY_100MS
 				
-				LOAD s9, 00
-				OUTPUT s9, 00
+				LOAD s0, 00
+				OUTPUT s0, 00
 				CALL DELAY_100MS				
 				
-				LOAD s9, F0
-				OUTPUT s9, 00
+				LOAD s0, F0
+				OUTPUT s0, 00
 				CALL DELAY_100MS
 				
-				LOAD s9, 00
-				OUTPUT s9, 00
+				LOAD s0, 00
+				OUTPUT s0, 00
 				
 				RETURN

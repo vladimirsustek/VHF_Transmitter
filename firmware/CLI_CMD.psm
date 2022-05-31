@@ -191,6 +191,7 @@ CONSTANT cCORRECT_COMMAND, 55
 ; 
 ; 
 ; Fuctions headers to be checked against received content
+; s6 is only needed when the function is called.
 STRING STCK_GET$, "TC_GT_"
 CMD_TCKGET: LOAD&RETURN s6, STCK_GET$
 
@@ -239,6 +240,18 @@ RSP_DA1STV: CALL UART_TX_CLEAR
 			
 			OUTPUTK SRDA1_STV$, 1
 		    OUTPUTK LF, 1
+			
+		    LOAD s0, 00
+            LOAD s1, 00
+            LOAD s2, 00
+            LOAD s3, 00
+            LOAD s4, 00
+            LOAD s5, 00
+            LOAD s6, 00
+            LOAD s7, 00
+            LOAD s8, 00
+            LOAD s9, 00
+            LOAD sA, 00
 			
 			RETURN
 
@@ -304,6 +317,18 @@ RSP_RFSMOD: CALL UART_TX_CLEAR
 			OUTPUTK SRRFS_MOD$, 1
 		    OUTPUTK LF, 1
 			
+			LOAD s0, 00
+            LOAD s1, 00
+            LOAD s2, 00
+            LOAD s3, 00
+            LOAD s4, 00
+            LOAD s5, 00
+            LOAD s6, 00
+            LOAD s7, 00
+            LOAD s8, 00
+            LOAD s9, 00
+            LOAD sA, 00
+			
 			RETURN
 
 ; Function reads milisecond counter and directly
@@ -323,6 +348,18 @@ RSP_TCKGET: CALL UART_TX_CLEAR
 			OUTPUT BUFF_DATA, cTxUARTDataPort
 
 			OUTPUTK LF, 1
+			
+			LOAD s0, 00
+            LOAD s1, 00
+            LOAD s2, 00
+            LOAD s3, 00
+            LOAD s4, 00
+            LOAD s5, 00
+            LOAD s6, 00
+            LOAD s7, 00
+            LOAD s8, 00
+            LOAD s9, 00
+            LOAD sA, 00
 			
 			RETURN
 
@@ -344,6 +381,18 @@ RSP_LCDSTB: CALL UART_TX_CLEAR
 
 			OUTPUTK LF, 1
 			
+			LOAD s0, 00
+            LOAD s1, 00
+            LOAD s2, 00
+            LOAD s3, 00
+            LOAD s4, 00
+            LOAD s5, 00
+            LOAD s6, 00
+            LOAD s7, 00
+            LOAD s8, 00
+            LOAD s9, 00
+            LOAD sA, 00
+			
 			RETURN
 
 
@@ -355,6 +404,19 @@ RSP_SYSRST: CALL UART_TX_CLEAR
 			CALL DELAY_100MS
 			LOAD s5, FF
             OUTPUT s5, cSystemResetPort
+			
+			LOAD s0, 00
+            LOAD s1, 00
+            LOAD s2, 00
+            LOAD s3, 00
+            LOAD s4, 00
+            LOAD s5, 00
+            LOAD s6, 00
+            LOAD s7, 00
+            LOAD s8, 00
+            LOAD s9, 00
+            LOAD sA, 00
+			
 			RETURN
 			
 ; Function sends out UART message signalizing error
@@ -384,6 +446,12 @@ RSP_GENERR:     	CALL UART_TX_CLEAR
 ; constant, which is affected in the COMPARE_CMD
 ; in case the input string was awaited and invoked
 ; 
+; If there is used another function added. The new one
+; must prevent of usage s8 and s7 registers. As the
+; s8 keeps the overal return value with initialized state
+; and s7 keeps length of the BUFF_HEAD, value needed to
+; be kept for correct reading of the RAM BUFFER.
+
 CHECK_RECEIVED:	LOAD s8, cUNKNOWN_COMAND
 				LOAD s7, BUFF_HEAD
 
@@ -448,6 +516,17 @@ CHECK_RECEIVED:	LOAD s8, cUNKNOWN_COMAND
 ; the function immediately returns. In case of correct command, but incorrect
 ; argument length, function also invokes no action. In case of correct command
 ; and correct argument length, an appropriate action is invoked and cCORRECT_COMMAND set.
+;
+; Function is designed to be called several times with several addresses in s0-s4 preloaded.
+;
+; Registers s3, s2 have the address of the certain "GET string for compare the input string" 
+; function loaded and s1, s0 has address of the final certain function to be called loaded.
+;
+; Register s4 is used as a counter when is being iterated during comparing the strings.
+;
+; ALL REGISTERS ARE NOT LONGER NEEDED TO HAVE PRESERVED CONTENT, so when the final function
+; (loaded in s0-s1) is called, inside of its body may be s0-s4 freely used/erased/overriden.
+;
 
 COMPARE_CMD:  LOAD s4, CMD_LNG ; length of string for the counter = number of the loop's cycles
 cycle:		  CALL@ (s3, s2) ; call the routine which returns checked string, pointing on 1st char
@@ -469,7 +548,7 @@ endofstr:	  LOAD s4, BUFF_TAIL; get buff tail (index of the string's begin)
 			  RETURN; else return
 			  		  
 match:		  CALL GET_ARG; retrieve argument
-			  CALL@ (s1, s0); call the function
+			  CALL@ (s1, s0); call the final function doing the action
 			  LOAD s8, cCORRECT_COMMAND
 			  RETURN
 			  
@@ -479,6 +558,8 @@ match:		  CALL GET_ARG; retrieve argument
 ; and further convert it into the 32-bit (4-byte) number 
 ; Finally, all is stored in the RAM (ADRARG_31_24 - ADRARG_07_00)
 ;
+; The function stores its return into RAM so s4 and s5 may be freely
+; used outside of the function.
 GET_ARG:	  LOAD s4, ADRARG_31_24
 iter32b:	  CALL READ_BUFF
 			  CALL ASCII2HEX
@@ -511,6 +592,8 @@ ASCII2HEX:    SUB BUFF_DATA, 30 ; first subtract 48 ("0")
 ; Function converts upper BUFF_DATA register nibble which is (always) 
 ; within 0x0 - 0xF into ASCII "0-9", "A-F" respectively
 ; Function output s5 is directly capable for LCD_16x2 driving
+; Therefore, s5 is the return value and after its usage it may be
+; again reused inside of the another function
 HEX2ASCII_UPPER: LOAD s5, BUFF_DATA
 				 AND s5, F0
 				 SR0 s5
@@ -526,6 +609,8 @@ HEX2ASCII_UPPER: LOAD s5, BUFF_DATA
 ; Function converts lower BUFF_DATA register nibble which is (always) 
 ; within 0x0 - 0xF into ASCII "0-9", "A-F" respectively
 ; Function output s5 is directly capable for LCD_16x2 driving
+; Therefore, s5 is the return value and after its usage it may be
+; again reused inside of the another function
 HEX2ASCII_LOWER: LOAD s5, BUFF_DATA
 				 AND s5, 0F
 				 ADD s5, 30
