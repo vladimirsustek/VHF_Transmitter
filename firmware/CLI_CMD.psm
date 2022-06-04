@@ -256,7 +256,7 @@ RSP_DA1STV: CALL UART_TX_CLEAR
 			INPUT s0, cDACCalcVoltReadPort_15_08
 			INPUT s1, cDACCalcVoltReadPort_07_00
 			
-			LOAD s3, cLCDPort_2_13
+			LOAD s3, cLCDPort_2_04
 
 ; 16-bit HEX2ASCII conversion begin
 div10_da1:	LOAD s2, s1
@@ -285,15 +285,17 @@ div10_da1:	LOAD s2, s1
 			JUMP div10_da1
 			
 da1_end:    LOAD s2, "m"
-			OUTPUT s2, cLCDPort_2_14
+			OUTPUT s2, cLCDPort_2_05
 			LOAD s2, "V"
-			OUTPUT s2, cLCDPort_2_15
+			OUTPUT s2, cLCDPort_2_06
 			
 			OUTPUTK SRDA1_STV$, 1
 		    OUTPUTK LF, 1	
 			
-da1_crlcd:  COMPARE s3, cLCDPort_2_09 ; padd unused characters with SPACE (when the new number is smaller)
+da1_crlcd:  COMPARE s3, cLCDPort_2_00 ; padd unused characters with SPACE (when the new number is smaller)
 			RETURN Z ; if there is no character to clean (5-digit width), simply return
+			COMPARE s3, 1F ; detect if if s3 was unterflowed due to full digit usage 
+			RETURN Z
 			LOAD s2, " "
 			OUTPUT s2, (s3)
 			SUB s3, 01
@@ -326,7 +328,7 @@ RSP_DA0STI: CALL UART_TX_CLEAR
 			INPUT s0, cDDSFreqReadPort_15_08 ; READ Phase Inc multiplied 3.5763 and 1.000404358e-3	
 			INPUT s1, cDDSFreqReadPort_07_00
 			
-			LOAD s3, cLCDPort_1_12
+			LOAD s3, cLCDPort_1_04
 ; 16-bit HEX2ASCII conversion begin		
 div10_da0:	LOAD s2, s1
 			OUTPUT s0, cDiv10WritePort_15_08 ; send value for FPGA HW div 10
@@ -354,17 +356,19 @@ div10_da0:	LOAD s2, s1
 			JUMP div10_da0
 			
 da0_end:    LOAD s2, "k"
-			OUTPUT s2, cLCDPort_1_13
+			OUTPUT s2, cLCDPort_1_05
 			LOAD s2, "H"
-			OUTPUT s2, cLCDPort_1_14
+			OUTPUT s2, cLCDPort_1_06
 			LOAD s2, "z"
-			OUTPUT s2, cLCDPort_1_15
+			OUTPUT s2, cLCDPort_1_07
 			
 			OUTPUTK SRDA0_SET$, 1
 			OUTPUTK LF, 1
 
-da0_crlcd:  COMPARE s3, cLCDPort_1_07 ; clearing unused characters (when the new number is smaller)
+da0_crlcd:  COMPARE s3, cLCDPort_1_00 ; clearing unused characters (when the new number is smaller)
 			RETURN Z  ; if there is no character to clean (5-digit width), simply return
+			COMPARE s3, 0F ; detect if if s3 was unterflowed due to full digit usage 
+			RETURN Z
 			LOAD s2, " "
 			OUTPUT s2, (s3)
 			SUB s3, 01

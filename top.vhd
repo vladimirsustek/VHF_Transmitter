@@ -39,10 +39,8 @@ entity top is
 				BTNS : in  STD_LOGIC_VECTOR (1 downto 0);
 				LEDS : out  STD_LOGIC_VECTOR (3 downto 0);
 				
-				UART_NRTS : in STD_LOGIC;
 				UART_TX : out STD_LOGIC;
 				UART_RX : in STD_LOGIC;
-				UART_NCTS : in STD_LOGIC;
 				UART_GND : out STD_LOGIC;
 				
 				DAC1_NRESET : in std_logic;
@@ -1186,8 +1184,8 @@ end process;
 	 ----------------------------------------------------------------------------------------------------------------
 	-- HW calculations for 16bit DA1 with full output voltage 5000mV
 	-- thus the voltage resolution is V_max/(2^16) = 0.07629394531mV
-	-- sDACCalcVolt's SHIFT-ARITHMETIC is equal to multiplication by 0.076293
-	sDACCalcVolt <= std_logic_vector(X"0000" + shift_right(unsigned(sDAC1BufferedValue), 4) + shift_right(unsigned(sDAC1BufferedValue), 7) + shift_right(unsigned(sDAC1BufferedValue), 8) + shift_right(unsigned(sDAC1BufferedValue), 9) + shift_right(unsigned(sDAC1BufferedValue), 13));
+	-- sDACCalcVolt's SHIFT-ARITHMETIC is equal to multiplication by 0.07635498047
+	sDACCalcVolt <= std_logic_vector(X"0000" + shift_right(unsigned(sDAC1BufferedValue), 4) + shift_right(unsigned(sDAC1BufferedValue), 7) + shift_right(unsigned(sDAC1BufferedValue), 8) + shift_right(unsigned(sDAC1BufferedValue), 9) + shift_right(unsigned(sDAC1BufferedValue), 13) + shift_right(unsigned(sDAC1BufferedValue), 14));
 	 ----------------------------------------------------------------------------------------------------------------
 	-- General purpose HW 16-bit divider and multiplier with exact calculations
 	sDiv10Out <= std_logic_vector(x"0000"+ unsigned(sDiv10In)/10);			
