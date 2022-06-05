@@ -156,6 +156,13 @@ CONSTANT cMlt10WritePort_07_00, 37
 CONSTANT cUNKNOWN_COMAND, AA
 CONSTANT cCORRECT_COMMAND, 55
 
+CONSTANT cNoRFMod, 00
+CONSTANT cRFTestSine, 01
+CONSTANT cRFTestSinePilot, 02
+CONSTANT cRFMono, 03
+CONSTANT cRFMonoPilot, 04
+CONSTANT cRFMonoStereo, 05
+CONSTANT cRFMonoStereoPilot, 06
 ;-----------------------------------------
 ; EACH commands needs always content of 15 characters:
 ; 
@@ -383,6 +390,28 @@ STRING SRRFS_MOD$, "RFS:M-set"
 RSP_RFSMOD: CALL UART_TX_CLEAR
 
 			CALL READ_ARG_07_00
+			
+			COMPARE BUFF_DATA, cNoRFMod
+			CALL Z, LCD_NOMOD
+
+			COMPARE BUFF_DATA, cRFTestSine
+			CALL Z, LCD_TMONO
+
+			COMPARE BUFF_DATA, cRFTestSinePilot
+			CALL Z, LCD_TMONP
+			
+			COMPARE BUFF_DATA, cRFMono
+			CALL Z, LCD_MONO
+
+			COMPARE BUFF_DATA, cRFMonoPilot
+			CALL Z, LCD_MONOP
+
+			COMPARE BUFF_DATA, cRFMonoStereo
+			CALL Z, LCD_MONST
+
+			COMPARE BUFF_DATA, cRFMonoStereoPilot
+			CALL Z, LCD_MOSTP
+			
 			OUTPUT BUFF_DATA, cRFModePort
 			
 			OUTPUTK SRRFS_MOD$, 1
@@ -652,3 +681,87 @@ HEX2ASCII_LOWER: LOAD s5, BUFF_DATA
 			  ; OUTPUT BUFF_DATA, cTxUARTDataPort
 			  ; OUTPUTK LF, 1
 			  ; RETURN
+			  
+LCD_NOMOD: LOAD s0, "N"
+	       OUTPUT s0, cLCDPort_2_11
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_12
+		   LOAD s0, "M"
+	       OUTPUT s0, cLCDPort_2_13
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_14
+		   LOAD s0, "d"
+	       OUTPUT s0, cLCDPort_2_15
+		   RETURN
+		   
+LCD_TMONO: LOAD s0, "T"
+	       OUTPUT s0, cLCDPort_2_11
+		   LOAD s0, "M"
+	       OUTPUT s0, cLCDPort_2_12
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_13
+		   LOAD s0, "n"
+	       OUTPUT s0, cLCDPort_2_14
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_15
+		   RETURN
+
+LCD_TMONP:LOAD s0, "T"
+	       OUTPUT s0, cLCDPort_2_11
+		   LOAD s0, "M"
+	       OUTPUT s0, cLCDPort_2_12
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_13
+		   LOAD s0, "n"
+	       OUTPUT s0, cLCDPort_2_14
+		   LOAD s0, "P"
+	       OUTPUT s0, cLCDPort_2_15
+		   RETURN
+		   
+LCD_MONO:  LOAD s0, " "
+	       OUTPUT s0, cLCDPort_2_11
+		   LOAD s0, "M"
+	       OUTPUT s0, cLCDPort_2_12
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_13
+		   LOAD s0, "n"
+	       OUTPUT s0, cLCDPort_2_14
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_15
+		   RETURN
+		   
+LCD_MONOP:  LOAD s0, "M"
+	       OUTPUT s0, cLCDPort_2_11
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_12
+		   LOAD s0, "n"
+	       OUTPUT s0, cLCDPort_2_13
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_14
+		   LOAD s0, "P"
+	       OUTPUT s0, cLCDPort_2_15
+		   RETURN
+		   
+LCD_MONST:  LOAD s0, "M"
+	       OUTPUT s0, cLCDPort_2_11
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_12
+		   LOAD s0, "n"
+	       OUTPUT s0, cLCDPort_2_13
+		   LOAD s0, "S"
+	       OUTPUT s0, cLCDPort_2_14
+		   LOAD s0, "t"
+	       OUTPUT s0, cLCDPort_2_15
+		   RETURN
+		   
+LCD_MOSTP:  LOAD s0, "M"
+	       OUTPUT s0, cLCDPort_2_11
+		   LOAD s0, "o"
+	       OUTPUT s0, cLCDPort_2_12
+		   LOAD s0, "S"
+	       OUTPUT s0, cLCDPort_2_13
+		   LOAD s0, "t"
+	       OUTPUT s0, cLCDPort_2_14
+		   LOAD s0, "P"
+	       OUTPUT s0, cLCDPort_2_15
+		   RETURN
