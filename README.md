@@ -24,6 +24,6 @@ As this project is complex, for better understanding I suggest to see:
 
 [VHF-Transmitter Demo Video](https://www.youtube.com/watch?v=P_qsDr-8gFA&t=1s&ab_channel=Vladim%C3%ADr%C5%A0ustek)
 
-[Block diagram ](/docs/VHF-Transmitter_CompleteSystem.pdf)
+[Block diagram](/docs/VHF_Transmitter_CompleteSystem.pdf)
 
-[Full hardware reference](/docs/V_Sustek_VHF-Transmitter_HW_V1.03.pdf)
+[Full hardware reference and development publication](/docs/V_Sustek_VHF-Transmitter_HW_V1.03.pdf)
